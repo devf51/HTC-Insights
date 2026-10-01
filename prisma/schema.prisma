@@ -6,8 +6,10 @@ generator client {
   output   = "../app/generated/prisma"
 }
 
+// SQLite ไฟล์เดียว รันบนเซิร์ฟเวอร์ส่วนตัว — ไม่มี scalar list และไม่มีชนิดคอลัมน์แบบ @db.*
+// enum ไม่ถูกบังคับที่ระดับฐานข้อมูล ค่าที่เขียนลงต้องผ่าน zod ก่อนเสมอ
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 // ============ enums ============
@@ -83,12 +85,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -121,7 +123,7 @@ model Employer {
   companyName  String
   contactEmail String // อีเมลติดต่อที่แสดงในประกาศ คนละตัวกับอีเมลบัญชี
   phone        String?
-  departments  String[] // แผนกวิชาที่เปิดรับ
+  departments  Json // แผนกวิชาที่เปิดรับ เป็นอาร์เรย์ของรหัสแผนก — SQLite ไม่รองรับ String[]
   isApproved   Boolean  @default(false)
   createdAt    DateTime @default(now())
 
@@ -140,7 +142,7 @@ model Company {
   phone         String?
   website       String?
   coverImageUrl String?
-  description   String?  @db.Text
+  description   String?
   isVerified    Boolean  @default(false)
   employerId    String?
   createdAt     DateTime @default(now())
@@ -162,8 +164,8 @@ model Review {
   department String
 
   gender           Gender
-  periodStart      DateTime @db.Date
-  periodEnd        DateTime @db.Date
+  periodStart      DateTime
+  periodEnd        DateTime
   dailyAllowance   Int?
   hasAccommodation Boolean  @default(false)
   hasTransport     Boolean  @default(false)
@@ -177,10 +179,10 @@ model Review {
   scoreWelfare Float
   scoreOverall Float
 
-  textWork   String  @db.Text
-  textPros   String? @db.Text
-  textCons   String? @db.Text
-  textAdvice String? @db.Text
+  textWork   String
+  textPros   String?
+  textCons   String?
+  textAdvice String?
 
   // ไม่ระบุตัวตน: ซ่อนจากทุกคนรวมถึงผู้ดูแล ตัวตนเก็บแบบเข้ารหัส
   // เปิดเผยได้เฉพาะเมื่อมีการร้องเรียน และต้องลง AuditLog ทุกครั้ง
@@ -188,7 +190,7 @@ model Review {
   anonIdentityEnc String?
 
   status          ContentStatus @default(PENDING)
-  rejectionReason String?       @db.Text
+  rejectionReason String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -206,7 +208,7 @@ model Review {
 model ReviewPhoto {
   id        String   @id @default(cuid())
   reviewId  String
-  url       String   @db.Text
+  url       String
   createdAt DateTime @default(now())
 
   review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
@@ -220,16 +222,16 @@ model JobPosting {
   employerId     String
   title          String
   department     String
-  description    String  @db.Text
-  qualifications String? @db.Text
-  benefits       String? @db.Text
+  description    String
+  qualifications String?
+  benefits       String?
   allowance      Int?
   contactEmail   String // อีเมลติดต่อในประกาศ ไม่ใช่อีเมลบัญชีผู้ลงประกาศ
   contactPhone   String?
 
   isActive        Boolean       @default(true)
   status          ContentStatus @default(PENDING)
-  rejectionReason String?       @db.Text
+  rejectionReason String?
   createdAt       DateTime      @default(now())
 
   company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
@@ -247,10 +249,10 @@ model CommunityPost {
   type       PostType
   department String?
   title      String
-  body       String   @db.Text
+  body       String
 
   status          ContentStatus @default(PENDING)
-  rejectionReason String?       @db.Text
+  rejectionReason String?
   createdAt       DateTime      @default(now())
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -266,13 +268,13 @@ model CommunityComment {
   postId   String
   userId   String
   parentId String? // คอมเมนต์ซ้อนเป็นลำดับชั้น ชี้ตัวเอง
-  body     String  @db.Text
+  body     String
 
   // เจ้าของกระทู้เลือกได้ หนึ่งกระทู้หนึ่งคำตอบ ตั้งใหม่ต้องล้างของเดิมในทรานแซกชันเดียว
   isBestAnswer Boolean @default(false)
 
   status          ContentStatus @default(PENDING)
-  rejectionReason String?       @db.Text
+  rejectionReason String?
   createdAt       DateTime      @default(now())
 
   post    CommunityPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -307,7 +309,7 @@ model Notification {
   id        String   @id @default(cuid())
   userId    String
   type      String // approve_review, reject_post, approve_upgrade, ...
-  message   String   @db.Text
+  message   String
   link      String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -320,7 +322,7 @@ model Notification {
 model Report {
   id         String @id @default(cuid())
   reporterId String
-  reason     String @db.Text
+  reason     String
 
   // ชี้ไปที่เนื้อหาชนิดใดชนิดหนึ่ง
   reviewId  String?
@@ -330,7 +332,7 @@ model Report {
   companyId String?
 
   status     ReportStatus @default(PENDING)
-  resolution String?      @db.Text
+  resolution String?
   createdAt  DateTime     @default(now())
 
   reporter User              @relation("ReportAuthor", fields: [reporterId], references: [id], onDelete: Cascade)
@@ -350,7 +352,7 @@ model AuditLog {
   action     String // approve_review, reveal_anonymous, toggle_ban_user, ...
   targetType String // review, post, comment, job, user, report
   targetId   String
-  detail     String?  @db.Text
+  detail     String?
   createdAt  DateTime @default(now())
 
   admin User @relation("AuditAdmin", fields: [adminId], references: [id], onDelete: Cascade)
@@ -367,10 +369,10 @@ model UpgradeRequest {
   studentId      String
   department     String
   educationLevel String
-  cardImageUrl   String @db.Text
+  cardImageUrl   String
 
   status          ContentStatus @default(PENDING)
-  rejectionReason String?       @db.Text
+  rejectionReason String?
   createdAt       DateTime      @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

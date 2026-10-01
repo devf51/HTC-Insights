@@ -85,12 +85,18 @@ v2 เขียนใหม่ทั้งหมดเป็น Next.js full-sta
 
 ## สถานะปัจจุบัน
 
-อยู่ที่ **Phase 0 — scaffold** แผนเต็มอยู่ที่
+Phase 0 เสร็จแล้ว ถัดไปคือ **Phase 1** แผนเต็มอยู่ที่
 `C:\Users\user\.claude\plans\htc-insights-synthetic-zephyr.md`
+
+**เปลี่ยนจากแผนเดิม (1 ต.ค. 2569):** ฐานข้อมูลเปลี่ยนจาก Postgres บน Neon เป็น **SQLite** และ deploy
+บน **เซิร์ฟเวอร์ส่วนตัว** แทน Vercel (Vercel เก็บไฟล์ SQLite ถาวรไม่ได้) ที่แผนเต็มเขียนถึง Neon หรือ
+Vercel ให้ถือตามนี้แทน
+
+นอกแผนเดิม: โครงหน้าบ้านทุกเส้นทางด้วยดีไซน์ซิสเต็ม Kernel ทำเสร็จแล้ว (ดู `docs/superpowers/`)
 
 | Phase | ขอบเขต | สถานะ |
 |---|---|---|
-| 0 | scaffold, env, เอกสาร | กำลังทำ |
+| 0 | scaffold, env, เอกสาร, migration แรก | เสร็จ |
 | 1 | Prisma schema + Auth.js + role guard | ยังไม่เริ่ม |
 | 2 | ค้นหาสถานประกอบการ + แผนที่ | ยังไม่เริ่ม |
 | 3 | เขียนรีวิว | ยังไม่เริ่ม |

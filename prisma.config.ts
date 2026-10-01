@@ -1,4 +1,5 @@
-// migrate ต้องใช้ DIRECT_URL (ไม่ผ่าน pooler) ส่วนแอปใช้ DATABASE_URL แบบ pooled
+// SQLite: CLI (migrate) และแอปใช้ DATABASE_URL ตัวเดียวกัน
+// path แบบ relative นับจาก root ของโปรเจกต์ บนเซิร์ฟเวอร์จริงให้ใช้ path เต็ม เช่น file:/var/lib/htc-insights/htc.db
 import "dotenv/config";
 import { defineConfig } from "prisma/config";
 
@@ -8,6 +9,6 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DIRECT_URL"],
+    url: process.env["DATABASE_URL"],
   },
 });

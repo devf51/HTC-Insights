@@ -8,10 +8,12 @@
 
 ## Stack
 
-Next.js 16 App Router · React 19 · TypeScript · Tailwind v4 · Prisma 7 + Postgres (Neon)
+Next.js 16 App Router · React 19 · TypeScript · Tailwind v4 · Prisma 7 + SQLite (`better-sqlite3` adapter)
 Auth.js v5 · Leaflet · Recharts · jsPDF + html2canvas · zod
 
 โปรเจกต์เดียว ไม่มี backend แยก API ทั้งหมดเป็น Route Handlers ใน `app/api/`
+deploy บนเซิร์ฟเวอร์ส่วนตัวที่มีดิสก์ (ไม่ใช่ Vercel — ไฟล์ SQLite ต้องอยู่ถาวร)
+Prisma Client ใช้ผ่าน `db` จาก `lib/db.ts` เท่านั้น อย่าสร้าง `PrismaClient` ใหม่
 
 ## กฎที่บังคับ
 
@@ -52,7 +54,10 @@ Auth.js v5 · Leaflet · Recharts · jsPDF + html2canvas · zod
   วรรณยุกต์หาย และต้องเปิดไฟล์ PDF ดูด้วยตาจริง การที่ไม่ error ไม่ได้แปลว่าถูก
 - **Recharts ในหน้ารายงาน** ตั้ง `isAnimationActive={false}` ไม่งั้น html2canvas
   จับภาพตอนกราฟยังวาดไม่เสร็จ
-- `prisma migrate` ใช้ `DIRECT_URL` ส่วนแอปใช้ `DATABASE_URL` ที่เป็น pooled
+- **SQLite:** `prisma migrate` และแอปใช้ `DATABASE_URL` ตัวเดียวกัน (`file:./prisma/dev.db` นับจาก
+  root) ไม่มี `String[]` ใช้ `Json` แทน, enum ไม่ถูกบังคับที่ฐานข้อมูล ต้อง validate ด้วย zod ก่อนเขียน,
+  ไม่มี `mode: "insensitive"` ในการค้นหา, การเขียนล็อกทั้งไฟล์ — บนเซิร์ฟเวอร์ต้องสำรองไฟล์ `.db` เอง
+- หลังแก้ schema รัน `npx prisma generate` ด้วย — Prisma 7 `migrate dev` ไม่ generate client ให้
 - npm ในเครื่องนี้บล็อก install script ถ้าลงแพ็กเกจที่ต้องใช้ postinstall ให้รัน
   `npm approve-scripts <pkg>`
 
