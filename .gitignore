@@ -39,3 +39,21 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# --- HTC Insights ---
+# ความลับ: v1 เคยหลุด secret ลง git มาแล้ว ห้ามซ้ำ
+.env
+.env.*
+!.env.example
+
+# dump ฐานข้อมูล
+*.sql
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+
+# ผลลัพธ์ที่สร้างอัตโนมัติ
+/app/generated
+
+/app/generated/prisma

@@ -1,0 +1,379 @@
+// HTC Insights v2 — ระบบฐานข้อมูลสถานประกอบการนักศึกษาวิทยาลัยเทคนิคหาดใหญ่
+// อ่าน context.md ก่อนแก้ไฟล์นี้ โดยเฉพาะหลักการโดเมน 4 ข้อ
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============ enums ============
+
+enum UserRole {
+  STUDENT // นักศึกษา ยืนยันด้วยโดเมนอีเมลวิทยาลัย
+  EXTERNAL // สถานประกอบการและบุคคลภายนอก
+  ADMIN // ผู้ดูแลระบบ
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  PREFER_NOT
+}
+
+/// สถานะกลางของเนื้อหาทุกชนิด เนื้อหาเกิดมาเป็น PENDING เสมอ
+/// ที่สาธารณะเห็นเฉพาะ APPROVED รวมถึงตัวนับและค่าเฉลี่ยด้วย
+enum ContentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PostType {
+  EXPERIENCE // เล่าประสบการณ์
+  QA // ถามตอบ
+  TIPS // เทคนิค
+  TEAM // หาเพื่อนฝึกงาน
+}
+
+enum ReportStatus {
+  PENDING
+  RESOLVED // ลบเนื้อหาหรือจัดการแล้ว
+  DISMISSED // ตรวจแล้วไม่ผิดกฎ
+}
+
+// ============ ผู้ใช้และการยืนยันตัวตน ============
+
+model User {
+  id             String    @id @default(cuid())
+  name           String?
+  email          String    @unique
+  emailVerified  DateTime?
+  image          String?
+  role           UserRole  @default(EXTERNAL)
+  isSuperAdmin   Boolean   @default(false)
+  isBanned       Boolean   @default(false)
+  // กรอกเมื่อคำขอยืนยันสิทธิ์นักศึกษาได้รับอนุมัติ
+  studentId      String?
+  department     String?
+  educationLevel String?
+  createdAt      DateTime  @default(now())
+
+  accounts        Account[]
+  sessions        Session[]
+  reviews         Review[]
+  posts           CommunityPost[]
+  comments        CommunityComment[]
+  likes           CommunityLike[]
+  notifications   Notification[]
+  reportsMade     Report[]           @relation("ReportAuthor")
+  auditLogs       AuditLog[]         @relation("AuditAdmin")
+  upgradeRequests UpgradeRequest[]
+  employer        Employer?
+}
+
+// ตารางที่ Auth.js Prisma adapter ต้องใช้
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============ สถานประกอบการ ============
+
+model Employer {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  companyName  String
+  contactEmail String // อีเมลติดต่อที่แสดงในประกาศ คนละตัวกับอีเมลบัญชี
+  phone        String?
+  departments  String[] // แผนกวิชาที่เปิดรับ
+  isApproved   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companies Company[]
+  jobs      JobPosting[]
+}
+
+model Company {
+  id            String   @id @default(cuid())
+  name          String
+  address       String?
+  industry      String?
+  lat           Float?
+  lng           Float?
+  phone         String?
+  website       String?
+  coverImageUrl String?
+  description   String?  @db.Text
+  isVerified    Boolean  @default(false)
+  employerId    String?
+  createdAt     DateTime @default(now())
+
+  employer Employer?    @relation(fields: [employerId], references: [id], onDelete: SetNull)
+  reviews  Review[]
+  jobs     JobPosting[]
+  reports  Report[]
+
+  @@index([name])
+}
+
+// ============ รีวิว ============
+
+model Review {
+  id         String @id @default(cuid())
+  companyId  String
+  userId     String
+  department String
+
+  gender           Gender
+  periodStart      DateTime @db.Date
+  periodEnd        DateTime @db.Date
+  dailyAllowance   Int?
+  hasAccommodation Boolean  @default(false)
+  hasTransport     Boolean  @default(false)
+  workStartTime    String?
+  workEndTime      String?
+
+  // คะแนน 4 ด้าน scoreOverall คำนวณจากค่าเฉลี่ยของสี่ตัวนี้ ไม่ให้ผู้ใช้กรอกเอง
+  scoreWork    Float
+  scoreEnv     Float
+  scoreMentor  Float
+  scoreWelfare Float
+  scoreOverall Float
+
+  textWork   String  @db.Text
+  textPros   String? @db.Text
+  textCons   String? @db.Text
+  textAdvice String? @db.Text
+
+  // ไม่ระบุตัวตน: ซ่อนจากทุกคนรวมถึงผู้ดูแล ตัวตนเก็บแบบเข้ารหัส
+  // เปิดเผยได้เฉพาะเมื่อมีการร้องเรียน และต้องลง AuditLog ทุกครั้ง
+  isAnonymous     Boolean @default(false)
+  anonIdentityEnc String?
+
+  status          ContentStatus @default(PENDING)
+  rejectionReason String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  company Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos  ReviewPhoto[]
+  reports Report[]
+
+  // หนึ่งคนรีวิวหนึ่งบริษัทได้ครั้งเดียว บังคับที่ฐานข้อมูลแทนการเช็คในโค้ด
+  @@unique([companyId, userId])
+  @@index([status, department])
+  @@index([status, companyId])
+}
+
+model ReviewPhoto {
+  id        String   @id @default(cuid())
+  reviewId  String
+  url       String   @db.Text
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+}
+
+// ============ ตำแหน่งงานฝึกงาน ============
+
+model JobPosting {
+  id             String  @id @default(cuid())
+  companyId      String
+  employerId     String
+  title          String
+  department     String
+  description    String  @db.Text
+  qualifications String? @db.Text
+  benefits       String? @db.Text
+  allowance      Int?
+  contactEmail   String // อีเมลติดต่อในประกาศ ไม่ใช่อีเมลบัญชีผู้ลงประกาศ
+  contactPhone   String?
+
+  isActive        Boolean       @default(true)
+  status          ContentStatus @default(PENDING)
+  rejectionReason String?       @db.Text
+  createdAt       DateTime      @default(now())
+
+  company  Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employer Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  reports  Report[]
+
+  @@index([status, isActive, department])
+}
+
+// ============ เว็บบอร์ดชุมชน ============
+
+model CommunityPost {
+  id         String   @id @default(cuid())
+  userId     String
+  type       PostType
+  department String?
+  title      String
+  body       String   @db.Text
+
+  status          ContentStatus @default(PENDING)
+  rejectionReason String?       @db.Text
+  createdAt       DateTime      @default(now())
+
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments CommunityComment[]
+  likes    CommunityLike[]
+  reports  Report[]
+
+  @@index([status, type, department])
+}
+
+model CommunityComment {
+  id       String  @id @default(cuid())
+  postId   String
+  userId   String
+  parentId String? // คอมเมนต์ซ้อนเป็นลำดับชั้น ชี้ตัวเอง
+  body     String  @db.Text
+
+  // เจ้าของกระทู้เลือกได้ หนึ่งกระทู้หนึ่งคำตอบ ตั้งใหม่ต้องล้างของเดิมในทรานแซกชันเดียว
+  isBestAnswer Boolean @default(false)
+
+  status          ContentStatus @default(PENDING)
+  rejectionReason String?       @db.Text
+  createdAt       DateTime      @default(now())
+
+  post    CommunityPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  CommunityComment?  @relation("CommentTree", fields: [parentId], references: [id], onDelete: Cascade)
+  replies CommunityComment[] @relation("CommentTree")
+  likes   CommunityLike[]
+  reports Report[]
+
+  @@index([postId, status])
+}
+
+/// กดถูกใจบัญชีละครั้ง บังคับด้วย unique ที่ฐานข้อมูล ไม่ใช่เช็คในโค้ดแล้วเจอ race condition
+model CommunityLike {
+  id        String   @id @default(cuid())
+  userId    String
+  postId    String?
+  commentId String?
+  createdAt DateTime @default(now())
+
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    CommunityPost?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment CommunityComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+  @@unique([userId, commentId])
+}
+
+// ============ แจ้งเตือน รายงาน ประวัติผู้ดูแล ============
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String // approve_review, reject_post, approve_upgrade, ...
+  message   String   @db.Text
+  link      String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model Report {
+  id         String @id @default(cuid())
+  reporterId String
+  reason     String @db.Text
+
+  // ชี้ไปที่เนื้อหาชนิดใดชนิดหนึ่ง
+  reviewId  String?
+  postId    String?
+  commentId String?
+  jobId     String?
+  companyId String?
+
+  status     ReportStatus @default(PENDING)
+  resolution String?      @db.Text
+  createdAt  DateTime     @default(now())
+
+  reporter User              @relation("ReportAuthor", fields: [reporterId], references: [id], onDelete: Cascade)
+  review   Review?           @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  post     CommunityPost?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment  CommunityComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  job      JobPosting?       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  company  Company?          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+/// ทุกการกระทำของผู้ดูแลต้องมีแถวที่นี่ เขียนในทรานแซกชันเดียวกับการกระทำ
+model AuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String // approve_review, reveal_anonymous, toggle_ban_user, ...
+  targetType String // review, post, comment, job, user, report
+  targetId   String
+  detail     String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  admin User @relation("AuditAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([action])
+}
+
+// ============ คำขอยืนยันสิทธิ์นักศึกษา ============
+
+model UpgradeRequest {
+  id             String @id @default(cuid())
+  userId         String
+  studentId      String
+  department     String
+  educationLevel String
+  cardImageUrl   String @db.Text
+
+  status          ContentStatus @default(PENDING)
+  rejectionReason String?       @db.Text
+  createdAt       DateTime      @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
