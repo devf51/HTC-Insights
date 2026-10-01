@@ -7,6 +7,8 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // jiti มากับ prisma อยู่แล้ว (โหลดไฟล์นี้เองก็ใช้มัน) — ไม่ต้องลง tsx เพิ่ม
+    seed: "npx jiti prisma/seed.ts",
   },
   datasource: {
     url: process.env["DATABASE_URL"],

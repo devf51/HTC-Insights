@@ -67,6 +67,7 @@ Prisma Client ใช้ผ่าน `db` จาก `lib/db.ts` เท่าน�
 npm run dev                  # รันที่ localhost:3000
 npx prisma migrate dev       # สร้าง migration หลังแก้ schema
 npx prisma studio            # ดูข้อมูลในฐานข้อมูล
+npx prisma db seed           # ข้อมูลตัวอย่าง 6 บริษัท (dev เท่านั้น รันซ้ำได้)
 node --test                  # รันเทสต์ทั้งหมดใน tests/ (อย่าใส่ tests/ ต่อท้าย พังบน Windows)
 npm run build                # ตรวจว่า build ผ่านก่อน commit
 ```

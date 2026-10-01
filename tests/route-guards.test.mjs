@@ -23,3 +23,11 @@ test("มีหน้า 401 และ 403", () => {
   assert.ok(existsSync("app/unauthorized.tsx"));
   assert.ok(existsSync("app/forbidden.tsx"));
 });
+
+test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
+  const src = existsSync("lib/companies.ts") ? readFileSync("lib/companies.ts", "utf8") : "";
+  const fns = src.match(/^export async function/gm)?.length ?? 0;
+  const guards = src.match(/await requireRole\("STUDENT", "ADMIN"\)/g)?.length ?? 0;
+  assert.ok(fns > 0, "ไม่พบฟังก์ชันใน lib/companies.ts");
+  assert.equal(guards, fns);
+});

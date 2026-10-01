@@ -142,3 +142,11 @@ html .material-symbols-outlined {
 html .material-symbols-outlined.icon-fill {
   font-variation-settings: "FILL" 1, "wght" 300, "opsz" 20;
 }
+
+/* หมุดแผนที่ — CircleMarker ของ Leaflet เป็น SVG path กฎ CSS ชนะ attribute สีที่ Leaflet ใส่ให้ */
+.kn-map-pin {
+  fill: var(--signal);
+  fill-opacity: 0.9;
+  stroke: var(--surface-100);
+  stroke-width: 2;
+}
