@@ -1,26 +1,144 @@
 @import "tailwindcss";
+@import "../components/ui/kernel.css";
 
+/* ===== Kernel tokens — ค่าจาก project/tokens.json ห้ามแก้ค่าเอง =====
+   :root = Paper (สว่าง) · [data-theme="night"] = Night (มืด)
+   Band และ footer ตั้ง data-theme="night" บนตัวเองเพื่อเป็นเกาะมืดในทั้งสองธีม */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface-000: #f4f4f1;
+  --surface-100: #ffffff;
+  --surface-200: #eaebe7;
+  --surface-band: #000000;
+  --line: #d9dbd5;
+  --line-strong: #80847e;
+  --ink: #15181b;
+  --ink-muted: #565b60;
+  --signal: #0f6b52;
+  --signal-strong: #0a5541;
+  --signal-tint: #e1efe9;
+  --on-signal: #ffffff;
+  --slate: #3d5f8f;
+  --success: #3f6e1c;
+  --warning: #8a5a00;
+  --danger: #b3261e;
+  --focus: var(--signal);
+  --link: var(--signal);
+  --scrim: rgba(22, 24, 28, 0.4);
+  --pop-shadow: 0 12px 32px rgba(21, 24, 27, 0.12);
+  color-scheme: light;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
 }
 
+[data-theme="night"] {
+  --surface-000: #0e1114;
+  --surface-100: #14181c;
+  --surface-200: #1b2025;
+  --surface-band: #000000;
+  --line: #262c32;
+  --line-strong: #68727c;
+  --ink: #e8ebee;
+  --ink-muted: #9aa3ad;
+  --signal: #3fae8a;
+  --signal-strong: #57c29e;
+  --signal-tint: #12261f;
+  --on-signal: #0b0e10;
+  --slate: #8fa9d1;
+  --success: #9ccc6b;
+  --warning: #e0a63a;
+  --danger: #f07a72;
+  /* ประกาศซ้ำ: var() ถูกคำนวณตรงที่ประกาศ ถ้าไม่ซ้ำ Band จะได้ focus สีของ Paper */
+  --focus: var(--signal);
+  --link: var(--signal);
+  --scrim: rgba(0, 0, 0, 0.6);
+  --pop-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+/* สี: inline เพื่อให้ utility อ้าง var(--ink) ตรง ๆ แล้วเปลี่ยนตามธีมของ element นั้น */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface-000: var(--surface-000);
+  --color-surface-100: var(--surface-100);
+  --color-surface-200: var(--surface-200);
+  --color-surface-band: var(--surface-band);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-signal: var(--signal);
+  --color-signal-strong: var(--signal-strong);
+  --color-signal-tint: var(--signal-tint);
+  --color-on-signal: var(--on-signal);
+  --color-slate: var(--slate);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* static: ส่งออกทุกตัวไป :root เสมอ เพราะ kernel.css อ้าง var(--radius-md) ฯลฯ ตรง ๆ
+   ระยะไม่ต้องกำหนด — สเกล 4px ของ Tailwind ตรงกับ Kernel (p-4 = 16px = space-4) */
+@theme static {
+  --font-sans: var(--font-plex-sans), var(--font-plex-thai), "Noto Sans Thai", system-ui, sans-serif;
+  --font-display: var(--font-instrument), var(--font-trirong), Georgia, serif;
+  --font-mono: var(--font-plex-mono), var(--font-plex-thai), ui-monospace, Consolas, monospace;
+
+  --radius-none: 0px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+
+  --text-h2: 26px;
+  --text-h2--line-height: 36px;
+  --text-h2--font-weight: 500;
+  --text-h3: 18px;
+  --text-h3--line-height: 28px;
+  --text-h3--font-weight: 500;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 30px;
+  --text-body: 16px;
+  --text-body--line-height: 26px;
+  --text-small: 14px;
+  --text-small--line-height: 22px;
+  --text-label: 15px;
+  --text-label--line-height: 22px;
+  --text-label--font-weight: 500;
+  --text-metric: 32px;
+  --text-metric--line-height: 36px;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 26px;
+    background: var(--surface-000);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    /* ไทยไม่มีช่องว่างระหว่างคำ ให้เบราว์เซอร์ตัดด้วยพจนานุกรม ห้าม break-all */
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Material Symbols — เส้นบาง (wght 300) ใกล้กับเส้น 1.5px ของ Kernel
+   ไม่อยู่ใน @layer: stylesheet ของ Google ตั้ง .material-symbols-outlined { font-size: 24px } แบบไม่มี layer
+   ซึ่งชนะทุก layer — จึงเพิ่ม specificity ด้วย html ให้ชนะไม่ว่าไฟล์ไหนโหลดก่อน
+   ผลข้างเคียง: utility ขนาดธรรมดาแพ้กฎนี้ ต้องใช้แบบ important เช่น !text-[24px] */
+html .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+  font-variation-settings: "FILL" 0, "wght" 300, "opsz" 20;
+  user-select: none;
+}
+html .material-symbols-outlined.icon-fill {
+  font-variation-settings: "FILL" 1, "wght" 300, "opsz" 20;
 }
