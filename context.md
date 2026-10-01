@@ -97,7 +97,7 @@ Vercel ให้ถือตามนี้แทน
 | Phase | ขอบเขต | สถานะ |
 |---|---|---|
 | 0 | scaffold, env, เอกสาร, migration แรก | เสร็จ |
-| 1 | Prisma schema + Auth.js + role guard | เสร็จ รอทดสอบ Google จริง (ต้องมี OAuth client + `ALLOWED_STUDENT_DOMAIN`) |
+| 1 | Prisma schema + Auth.js + role guard | เสร็จ (ทดสอบล็อกอิน Google จริงแล้ว 1 ต.ค. 2569) |
 | 2 | ค้นหาสถานประกอบการ + แผนที่ | ยังไม่เริ่ม |
 | 3 | เขียนรีวิว | ยังไม่เริ่ม |
 | 4 | เว็บบอร์ดชุมชน | ยังไม่เริ่ม |

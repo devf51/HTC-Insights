@@ -1,11 +1,12 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { actionFor, navFor } from "../lib/nav.ts";
+import { SETTINGS, actionFor, navFor } from "../lib/nav.ts";
 
 // ลิงก์ที่ไม่อยู่ในเมนู แต่หน้าต่าง ๆ ลิงก์ไปหา (spec ส่วนที่ 3) + หน้ารายละเอียด
+// SETTINGS คือไอคอนเฟืองในแถบบน — ใช้ค่าเดียวกับที่ TopNav ใช้ ไม่พิมพ์ path ซ้ำ
 const INNER = [
-  "/settings",
+  SETTINGS.href,
   "/login",
   "/insights/write-review",
   "/insights/[id]",

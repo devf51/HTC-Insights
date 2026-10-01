@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { actionFor, isActive, navFor } from "../lib/nav.ts";
+import { SETTINGS, actionFor, isActive, navFor } from "../lib/nav.ts";
 
 const ROLES = [null, "STUDENT", "EXTERNAL", "ADMIN"];
 
@@ -14,6 +14,11 @@ test("เมนูแต่ละบทบาทตรงตามสเปก",
 
 test("ไม่มีบทบาทไหนมีลิงก์เกิน 5 (กฎ TopNav ของ Kernel และความกว้างแถบล่าง)", () => {
   for (const r of ROLES) assert.ok(navFor(r).length <= 5, String(r));
+});
+
+test("ตั้งค่าเป็นไอคอนในแถบบน ไม่กินช่องเมนูของบทบาทไหน", () => {
+  assert.deepEqual(SETTINGS, { href: "/settings", label: "ตั้งค่า", icon: "settings" });
+  for (const r of ROLES) assert.ok(!navFor(r).some((i) => i.href === SETTINGS.href), String(r));
 });
 
 test("ปุ่มขวาบน: ผู้เยี่ยมชมไปเข้าสู่ระบบ ผู้ดูแลไปโปรไฟล์ นอกนั้นไม่มี", () => {

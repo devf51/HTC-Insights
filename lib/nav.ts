@@ -11,6 +11,9 @@ const POST_JOB: NavItem = { href: "/employer/register", label: "ลงประ�
 const PROFILE: NavItem = { href: "/profile", label: "โปรไฟล์", icon: "person" };
 const ADMIN: NavItem = { href: "/admin", label: "ผู้ดูแล", icon: "shield_person" };
 
+/** ไอคอนเฟืองมุมขวาของ TopNav ทุกบทบาท — ไม่อยู่ใน navFor เพราะเมนูเต็ม 5 ช่องแล้ว */
+export const SETTINGS: NavItem = { href: "/settings", label: "ตั้งค่า", icon: "settings" };
+
 /** เมนูหลัก ใช้ทั้ง TopNav (จอกว้าง) และ BottomNav (มือถือ) — ไม่เกิน 5 รายการ */
 export function navFor(role: Role | null): NavItem[] {
   switch (role) {
