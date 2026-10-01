@@ -10,7 +10,7 @@ const OPTIONS: { id: Choice; label: string; hint: string }[] = [
   { id: "night", label: "มืด", hint: "พื้นเทาเข้ม สบายตาตอนกลางคืน" },
 ];
 
-// กติกาเดียวกับ THEME_SCRIPT ใน app/layout.tsx: เก็บ "paper" | "night", ไม่มีค่า = ตามเครื่อง
+// กติกาเดียวกับ applyStoredTheme ใน components/ThemeScript.tsx: เก็บ "paper" | "night", ไม่มีค่า = ตามเครื่อง
 const listeners = new Set<() => void>();
 
 function subscribe(cb: () => void) {

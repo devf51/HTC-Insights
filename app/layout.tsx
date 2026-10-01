@@ -3,6 +3,7 @@ import { IBM_Plex_Mono, IBM_Plex_Sans, IBM_Plex_Sans_Thai, Instrument_Serif, Tri
 import "./globals.css";
 import { BottomNav } from "@/components/BottomNav";
 import { Footer } from "@/components/Footer";
+import { ThemeScript } from "@/components/ThemeScript";
 import { TopNav } from "@/components/TopNav";
 import { actionFor, navFor } from "@/lib/nav";
 import { getCurrentUser } from "@/lib/session";
@@ -21,10 +22,6 @@ export const metadata: Metadata = {
 // viewport-fit=cover ทำให้ env(safe-area-inset-bottom) มีค่าบน iPhone — BottomNav ต้องใช้
 export const viewport: Viewport = { viewportFit: "cover" };
 
-// ตั้งธีมก่อนเบราว์เซอร์วาดหน้าแรก กันจอกระพริบ (node_modules/next/dist/docs/01-app/02-guides/preventing-flash-before-hydration.md)
-// ค่าที่เก็บ: "paper" | "night" | ไม่มี (= ตามเครื่อง) — ThemePicker ใช้กติกาเดียวกัน
-const THEME_SCRIPT = `(function(){try{var t=localStorage.getItem("theme");if(t!=="paper"&&t!=="night")t=matchMedia("(prefers-color-scheme: dark)").matches?"night":"paper";document.documentElement.setAttribute("data-theme",t)}catch(e){}})()`;
-
 const fontVars = [plexSans, plexThai, plexMono, instrument, trirong].map((f) => f.variable).join(" ");
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
@@ -36,7 +33,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="th" className={fontVars} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+        <ThemeScript />
         {/* display=block: กันชื่อไอคอนโผล่เป็นตัวหนังสือระหว่างโหลด
             กฎ no-page-custom-font เป็นของ Pages Router — root layout ครอบทุกหน้าอยู่แล้ว */}
         {/* eslint-disable-next-line @next/next/google-font-display, @next/next/no-page-custom-font */}

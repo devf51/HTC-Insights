@@ -37,12 +37,3 @@ export function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(href + "/");
 }
-
-/**
- * แปลง DEV_ROLE เป็นบทบาท ค่าที่ไม่รู้จักหรือรันบน production = ผู้เยี่ยมชม
- * ponytail: ชั่วคราวจนกว่า Auth.js จะมาใน Phase 1 — ลบฟังก์ชันนี้และ DEV_ROLE ทิ้งตอนนั้น
- */
-export function devRole(value: string | undefined, nodeEnv: string | undefined): Role | null {
-  if (nodeEnv === "production") return null;
-  return value === "STUDENT" || value === "EXTERNAL" || value === "ADMIN" ? value : null;
-}

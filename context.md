@@ -85,7 +85,7 @@ v2 เขียนใหม่ทั้งหมดเป็น Next.js full-sta
 
 ## สถานะปัจจุบัน
 
-Phase 0 เสร็จแล้ว ถัดไปคือ **Phase 1** แผนเต็มอยู่ที่
+Phase 0–1 เสร็จแล้ว ถัดไปคือ **Phase 2** แผนเต็มอยู่ที่
 `C:\Users\user\.claude\plans\htc-insights-synthetic-zephyr.md`
 
 **เปลี่ยนจากแผนเดิม (1 ต.ค. 2569):** ฐานข้อมูลเปลี่ยนจาก Postgres บน Neon เป็น **SQLite** และ deploy
@@ -97,7 +97,7 @@ Vercel ให้ถือตามนี้แทน
 | Phase | ขอบเขต | สถานะ |
 |---|---|---|
 | 0 | scaffold, env, เอกสาร, migration แรก | เสร็จ |
-| 1 | Prisma schema + Auth.js + role guard | ยังไม่เริ่ม |
+| 1 | Prisma schema + Auth.js + role guard | เสร็จ รอทดสอบ Google จริง (ต้องมี OAuth client + `ALLOWED_STUDENT_DOMAIN`) |
 | 2 | ค้นหาสถานประกอบการ + แผนที่ | ยังไม่เริ่ม |
 | 3 | เขียนรีวิว | ยังไม่เริ่ม |
 | 4 | เว็บบอร์ดชุมชน | ยังไม่เริ่ม |

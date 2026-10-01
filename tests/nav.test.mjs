@@ -1,24 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { actionFor, devRole, isActive, navFor } from "../lib/nav.ts";
+import { actionFor, isActive, navFor } from "../lib/nav.ts";
 
 const ROLES = [null, "STUDENT", "EXTERNAL", "ADMIN"];
-
-test("devRole รับเฉพาะชื่อบทบาทตัวพิมพ์ใหญ่ที่ถูกต้อง ค่าอื่นเป็นผู้เยี่ยมชม", () => {
-  assert.equal(devRole("STUDENT", "development"), "STUDENT");
-  assert.equal(devRole("EXTERNAL", "development"), "EXTERNAL");
-  assert.equal(devRole("ADMIN", "development"), "ADMIN");
-  assert.equal(devRole("student", "development"), null);
-  assert.equal(devRole(" ADMIN", "development"), null);
-  assert.equal(devRole("", "development"), null);
-  assert.equal(devRole(undefined, "development"), null);
-  assert.equal(devRole("SUPERADMIN", "development"), null);
-});
-
-test("devRole ไม่มีผลบน production แม้ตั้ง ADMIN ไว้", () => {
-  assert.equal(devRole("ADMIN", "production"), null);
-  assert.equal(devRole("STUDENT", "production"), null);
-});
 
 test("เมนูแต่ละบทบาทตรงตามสเปก", () => {
   const hrefs = (r) => navFor(r).map((i) => i.href);

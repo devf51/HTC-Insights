@@ -3,7 +3,6 @@ import { EmptyState } from "@/components/EmptyState";
 import { PageShell } from "@/components/PageShell";
 import { buttonClass } from "@/components/ui/Button";
 
-// ponytail: ยังไม่มี guard — ใครก็เปิดได้ Phase 1 ใส่ requireAdmin()
 export default function AdminPage() {
   return (
     <PageShell
