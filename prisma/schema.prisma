@@ -252,12 +252,17 @@ model CommunityPost {
   title      String
   body       String
 
+  // คำตอบที่ดีที่สุด (หมวดถามตอบ) — ชี้ที่ความคิดเห็นตัวเดียว ฐานข้อมูลจึงรับประกันหนึ่งคำตอบต่อกระทู้เอง
+  // ลบความคิดเห็นนั้น = ล้างค่า (SetNull)
+  bestAnswerId String? @unique
+
   status          ContentStatus @default(PENDING)
   rejectionReason String?
   createdAt       DateTime      @default(now())
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comments CommunityComment[]
+  comments   CommunityComment[] @relation("PostComments")
+  bestAnswer CommunityComment?  @relation("BestAnswer", fields: [bestAnswerId], references: [id], onDelete: SetNull)
   likes    CommunityLike[]
   reports  Report[]
 
@@ -271,14 +276,12 @@ model CommunityComment {
   parentId String? // คอมเมนต์ซ้อนเป็นลำดับชั้น ชี้ตัวเอง
   body     String
 
-  // เจ้าของกระทู้เลือกได้ หนึ่งกระทู้หนึ่งคำตอบ ตั้งใหม่ต้องล้างของเดิมในทรานแซกชันเดียว
-  isBestAnswer Boolean @default(false)
-
   status          ContentStatus @default(PENDING)
   rejectionReason String?
   createdAt       DateTime      @default(now())
 
-  post    CommunityPost      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post         CommunityPost      @relation("PostComments", fields: [postId], references: [id], onDelete: Cascade)
+  bestAnswerOf CommunityPost?     @relation("BestAnswer")
   user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   parent  CommunityComment?  @relation("CommentTree", fields: [parentId], references: [id], onDelete: Cascade)
   replies CommunityComment[] @relation("CommentTree")

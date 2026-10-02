@@ -4,7 +4,7 @@
 // โค้ดแอปยังใช้ db จาก lib/db.ts เท่านั้น
 import "dotenv/config";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
-import { PrismaClient, type ContentStatus } from "../app/generated/prisma/client";
+import { PrismaClient, type ContentStatus, type PostType } from "../app/generated/prisma/client";
 
 if (process.env.NODE_ENV === "production") throw new Error("ห้าม seed ข้อมูลตัวอย่างบนเซิร์ฟเวอร์จริง");
 if (process.env.DATABASE_URL !== "file:./prisma/dev.db") throw new Error("seed ใช้กับฐานข้อมูล dev (file:./prisma/dev.db) เท่านั้น");
@@ -51,6 +51,35 @@ const REVIEWS: SeedReview[] = [
   { id: "seed_r8", companyId: "seed_c6", userId: "seed_u4", department: "แผนกวิชาช่างอิเล็กทรอนิกส์", status: "APPROVED", scores: [2, 2, 3, 1], allowance: 150, text: "งานซ้ำ ๆ ไม่ค่อยได้เรียนรู้" },
 ];
 
+type SeedPost = { id: string; userId: string; type: PostType; department: string | null; status: ContentStatus; title: string; body: string };
+
+const POSTS: SeedPost[] = [
+  { id: "seed_post1", userId: "seed_u1", type: "QA", department: "แผนกวิชาช่างยนต์", status: "APPROVED", title: "ฝึกงานช่างยนต์ที่ไหนได้เบี้ยเลี้ยงดีบ้าง", body: "ปีหน้าจะออกฝึกแล้ว อยากได้ที่ที่มีเบี้ยเลี้ยงและได้ลงมือซ่อมจริง แนะนำหน่อยครับ" },
+  { id: "seed_post2", userId: "seed_u2", type: "EXPERIENCE", department: "แผนกวิชาเทคโนโลยีสารสนเทศ", status: "APPROVED", title: "เล่าประสบการณ์ฝึกงานบริษัทไอทีในหาดใหญ่", body: "ได้ช่วยดูแลเว็บและแก้คอมพิวเตอร์ในออฟฟิศ พี่ ๆ ใจดี สอนละเอียดมาก" },
+  { id: "seed_post3", userId: "seed_u3", type: "TIPS", department: null, status: "PENDING", title: "เทคนิคเขียนรายงานฝึกงานให้เสร็จเร็ว", body: "จดงานที่ทำทุกวันตั้งแต่วันแรก แล้วรายงานจะเขียนง่ายมาก" },
+  { id: "seed_post4", userId: "seed_u4", type: "TEAM", department: "แผนกวิชาช่างอิเล็กทรอนิกส์", status: "REJECTED", title: "กระทู้ที่ถูกปฏิเสธ", body: "ข้อความกระทู้ที่ถูกปฏิเสธ ไม่ควรแสดงในบอร์ด" },
+  { id: "seed_post5", userId: "seed_u3", type: "QA", department: null, status: "APPROVED", title: "ต้องเตรียมเอกสารอะไรบ้างก่อนออกฝึก", body: "มีใครมีรายการเอกสารที่ต้องเตรียมก่อนออกฝึกบ้างครับ" },
+];
+
+type SeedComment = { id: string; postId: string; userId: string; parentId: string | null; status: ContentStatus; body: string };
+
+// เรียงให้ต้นทางถูกสร้างก่อนคำตอบ
+const COMMENTS: SeedComment[] = [
+  { id: "seed_cm1", postId: "seed_post1", userId: "seed_u2", parentId: null, status: "APPROVED", body: "หาดใหญ่ออโต้เซอร์วิสให้วันละ 300 ได้ซ่อมจริงครับ" },
+  { id: "seed_cm2", postId: "seed_post1", userId: "seed_u3", parentId: "seed_cm1", status: "APPROVED", body: "ยืนยันครับ พี่เลี้ยงดีมาก" },
+  { id: "seed_cm3", postId: "seed_post1", userId: "seed_u4", parentId: null, status: "PENDING", body: "ความคิดเห็นที่รอตรวจของคนอื่น" },
+  { id: "seed_cm4", postId: "seed_post1", userId: "seed_u2", parentId: null, status: "REJECTED", body: "ความคิดเห็นที่ถูกปฏิเสธ" },
+  { id: "seed_cm5", postId: "seed_post1", userId: "seed_u3", parentId: "seed_cm1", status: "PENDING", body: "ความคิดเห็นที่รอตรวจของฉันเอง" },
+  { id: "seed_cm6", postId: "seed_post5", userId: "seed_u1", parentId: null, status: "APPROVED", body: "สำเนาบัตรประชาชน หนังสือส่งตัวจากวิทยาลัย และรูปถ่ายครับ" },
+  { id: "seed_cm7", postId: "seed_post5", userId: "seed_u3", parentId: null, status: "APPROVED", body: "ขอบคุณครับ" },
+];
+
+const LIKES = [
+  { id: "seed_lk1", userId: "seed_u2", postId: "seed_post1" },
+  { id: "seed_lk2", userId: "seed_u4", postId: "seed_post1" },
+  { id: "seed_lk3", userId: "seed_u1", commentId: "seed_cm1" },
+];
+
 async function main() {
   for (const u of USERS) await db.user.upsert({ where: { id: u.id }, create: u, update: u });
   for (const c of COMPANIES) await db.company.upsert({ where: { id: c.id }, create: c, update: c });
@@ -81,8 +110,18 @@ async function main() {
     create: { id: "seed_p1", reviewId: "seed_r2", url: "https://res.cloudinary.com/demo/image/upload/sample.jpg" },
     update: {},
   });
+  // bestAnswerId ล้างทุกรอบ (สคริปต์ทดสอบเปลี่ยนค่าได้) แล้วตั้งของ seed_post1 หลังความคิดเห็นถูกสร้าง
+  for (const p of POSTS) {
+    const data = { ...p, bestAnswerId: null };
+    await db.communityPost.upsert({ where: { id: p.id }, create: data, update: data });
+  }
+  for (const c of COMMENTS) await db.communityComment.upsert({ where: { id: c.id }, create: c, update: c });
+  for (const l of LIKES) await db.communityLike.upsert({ where: { id: l.id }, create: l, update: l });
+  await db.communityPost.update({ where: { id: "seed_post1" }, data: { bestAnswerId: "seed_cm1" } });
+
   const byStatus = await db.review.groupBy({ by: ["status"], where: { id: { startsWith: "seed_" } }, _count: { _all: true } });
   console.log(`seed: ${COMPANIES.length} บริษัท`, byStatus.map((s) => `${s.status}=${s._count._all}`).join(" "));
+  console.log(`seed: ${POSTS.length} กระทู้ ${COMMENTS.length} ความคิดเห็น ${LIKES.length} ถูกใจ`);
 }
 
 main().finally(() => db.$disconnect());

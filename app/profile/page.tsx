@@ -8,6 +8,8 @@ import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { requireUser } from "@/lib/auth";
+import { myPosts } from "@/lib/community";
+import { postTypeLabel } from "@/lib/community-rules";
 import type { Role } from "@/lib/nav";
 import { myReviews } from "@/lib/reviews";
 
@@ -29,7 +31,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
   // layout เรียกแล้ว เรียกซ้ำเพื่อเอาข้อมูลผู้ใช้ — getCurrentUser() ห่อ cache() ไม่ query ซ้ำ
   const user = await requireUser();
   const sent = (await searchParams).sent === "1";
-  const reviews = user.role === "STUDENT" ? await myReviews() : [];
+  const [reviews, posts] = user.role === "STUDENT" ? await Promise.all([myReviews(), myPosts()]) : [[], []];
 
   async function signOutAction() {
     "use server";
@@ -72,34 +74,65 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         </span>
       </Card>
       {user.role === "STUDENT" ? (
-        <section className="flex flex-col gap-4">
-          <SectionHeader title="รีวิวของฉัน" />
-          {reviews.length === 0 ? (
-            <EmptyState icon="rate_review" title="ยังไม่มีรีวิว">
-              <Link href="/insights/write-review" className="kn-link">
-                เขียนรีวิวที่ฝึกงานของคุณ
-              </Link>
-            </EmptyState>
-          ) : (
-            reviews.map((r) => (
-              <Card
-                key={r.id}
-                eyebrow={thaiDate(r.createdAt)}
-                title={r.company.name}
-                footer={<Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>}
-              >
-                {r.status === "REJECTED" && (
-                  <>
-                    <p>{`เหตุผล: ${r.rejectionReason ?? "ไม่ระบุ"}`}</p>
-                    <Link href={`/insights/write-review?edit=${r.id}`} className="kn-link">
-                      แก้ไขแล้วส่งใหม่
-                    </Link>
-                  </>
-                )}
-              </Card>
-            ))
-          )}
-        </section>
+        <>
+          <section className="flex flex-col gap-4">
+            <SectionHeader title="รีวิวของฉัน" />
+            {reviews.length === 0 ? (
+              <EmptyState icon="rate_review" title="ยังไม่มีรีวิว">
+                <Link href="/insights/write-review" className="kn-link">
+                  เขียนรีวิวที่ฝึกงานของคุณ
+                </Link>
+              </EmptyState>
+            ) : (
+              reviews.map((r) => (
+                <Card
+                  key={r.id}
+                  eyebrow={thaiDate(r.createdAt)}
+                  title={r.company.name}
+                  footer={<Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>}
+                >
+                  {r.status === "REJECTED" && (
+                    <>
+                      <p>{`เหตุผล: ${r.rejectionReason ?? "ไม่ระบุ"}`}</p>
+                      <Link href={`/insights/write-review?edit=${r.id}`} className="kn-link">
+                        แก้ไขแล้วส่งใหม่
+                      </Link>
+                    </>
+                  )}
+                </Card>
+              ))
+            )}
+          </section>
+          <section className="flex flex-col gap-4">
+            <SectionHeader title="กระทู้ของฉัน" />
+            {posts.length === 0 ? (
+              <EmptyState icon="forum" title="ยังไม่มีกระทู้">
+                <Link href="/community/new" className="kn-link">
+                  ตั้งกระทู้แรก
+                </Link>
+              </EmptyState>
+            ) : (
+              posts.map((p) => (
+                <Card
+                  key={p.id}
+                  eyebrow={`${postTypeLabel(p.type)} · ${thaiDate(p.createdAt)}`}
+                  title={
+                    p.status === "REJECTED" ? (
+                      p.title
+                    ) : (
+                      <Link href={`/community/${p.id}`} className="kn-link">
+                        {p.title}
+                      </Link>
+                    )
+                  }
+                  footer={<Badge tone={STATUS[p.status].tone}>{STATUS[p.status].label}</Badge>}
+                >
+                  {p.status === "REJECTED" && <p>{`เหตุผล: ${p.rejectionReason ?? "ไม่ระบุ"}`}</p>}
+                </Card>
+              ))
+            )}
+          </section>
+        </>
       ) : (
         <EmptyState icon="rate_review">ประกาศของคุณจะแสดงที่นี่</EmptyState>
       )}

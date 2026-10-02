@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { POST_TYPE_VALUES } from "./community-rules";
 import { DEPARTMENT_VALUES } from "./departments";
 import { parseThaiDate, periodError, workTimeError } from "./review-rules";
 
@@ -120,3 +121,40 @@ export const writeReviewParamsSchema = z.object({
   new: z.literal("1").optional().catch(undefined),
   edit: idSchema.optional().catch(undefined),
 });
+
+// ---------- เว็บบอร์ดชุมชน (JSON) ----------
+
+/** query string ของ /community — ค่าผิดรูปแบบถูกเพิกเฉย */
+export const communityListParamsSchema = z.object({
+  type: z.enum(POST_TYPE_VALUES).optional().catch(undefined),
+  department: z.enum(DEPARTMENT_VALUES).optional().catch(undefined),
+  page: z.coerce.number().int().min(1).catch(1),
+});
+
+export const postInputSchema = z.object({
+  type: z.enum(POST_TYPE_VALUES, { error: "เลือกหมวดกระทู้" }),
+  // "" หรือไม่ส่ง = ทั่วไป ไม่ระบุแผนก
+  department: z
+    .union([z.literal(""), z.enum(DEPARTMENT_VALUES)], { error: "เลือกแผนกวิชาจากรายการ" })
+    .optional()
+    .transform((v) => v || null),
+  title: z.string({ error: "กรอกหัวข้อ" }).trim().min(5, "หัวข้ออย่างน้อย 5 ตัวอักษร").max(120, "หัวข้อไม่เกิน 120 ตัวอักษร"),
+  body: z.string({ error: "กรอกเนื้อหา" }).trim().min(10, "เนื้อหาอย่างน้อย 10 ตัวอักษร").max(5000, "เนื้อหาไม่เกิน 5,000 ตัวอักษร"),
+});
+export type PostInput = z.infer<typeof postInputSchema>;
+
+export const commentInputSchema = z.object({
+  postId: idSchema,
+  parentId: idSchema.nullish().transform((v) => v ?? null),
+  body: z.string({ error: "พิมพ์ความคิดเห็น" }).trim().min(1, "พิมพ์ความคิดเห็น").max(2000, "ความคิดเห็นไม่เกิน 2,000 ตัวอักษร"),
+});
+export type CommentInput = z.infer<typeof commentInputSchema>;
+
+/** กดถูกใจกระทู้หรือความคิดเห็น อย่างใดอย่างหนึ่งเท่านั้น */
+export const likeInputSchema = z.union([z.strictObject({ postId: idSchema }), z.strictObject({ commentId: idSchema })], {
+  error: "ระบุกระทู้หรือความคิดเห็นอย่างใดอย่างหนึ่ง",
+});
+export type LikeInput = z.infer<typeof likeInputSchema>;
+
+/** commentId: null = ยกเลิกคำตอบที่ดีที่สุด */
+export const bestAnswerInputSchema = z.object({ commentId: idSchema.nullable() }, { error: "ระบุความคิดเห็น" });

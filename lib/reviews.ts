@@ -1,7 +1,8 @@
-import { Prisma } from "@/app/generated/prisma/client";
+import type { Prisma } from "@/app/generated/prisma/client";
 import { requireRole, requireUser } from "./auth";
 import { uploadImage, uploadsEnabled } from "./cloudinary";
-import { db } from "./db";
+import { db, isPrismaError } from "./db";
+import { UserError } from "./http";
 import { findPlace } from "./places";
 import { canEditReview, overallScore, photoError } from "./review-rules";
 import type { CompanyChoice, ReviewFields } from "./validation";
@@ -9,24 +10,13 @@ import type { CompanyChoice, ReviewFields } from "./validation";
 // ทุกฟังก์ชัน export async เริ่มด้วย guard เอง (เหตุผลเดียวกับ lib/companies.ts) — tests/route-guards.test.mjs ตรวจ
 // รีวิวที่ส่งใหม่และที่แก้แล้วเป็น PENDING เสมอ — หลักการโดเมนข้อ 1
 
-/** ข้อผิดพลาดที่ผู้ใช้แก้ได้ — lib/review-request.ts แปลงเป็น JSON ตาม status */
-export class ReviewError extends Error {
-  status: 400 | 404 | 409;
-  constructor(status: 400 | 404 | 409, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
-
 const ALREADY_REVIEWED = "คุณรีวิวสถานประกอบการนี้แล้ว ดูสถานะได้ที่หน้าโปรไฟล์";
 const PHOTO_FOLDER = "htc-insights/reviews";
 
-const isPrismaError = (e: unknown, code: string) => e instanceof Prisma.PrismaClientKnownRequestError && e.code === code;
-
 function checkPhotos(photos: File[]) {
-  if (photos.length > 0 && !uploadsEnabled()) throw new ReviewError(400, "ระบบยังไม่เปิดให้แนบรูป");
+  if (photos.length > 0 && !uploadsEnabled()) throw new UserError(400, "ระบบยังไม่เปิดให้แนบรูป");
   const err = photoError(photos);
-  if (err) throw new ReviewError(400, err);
+  if (err) throw new UserError(400, err);
 }
 
 // ponytail: อัปโหลดก่อนเขียนฐานข้อมูล ถ้าทรานแซกชันล้ม รูปจะค้างใน Cloudinary — เก็บกวาดเมื่อพบว่าเกิดบ่อย
@@ -40,12 +30,12 @@ type CompanyTarget = { id: string } | { create: Prisma.CompanyCreateInput };
 async function companyTarget(choice: CompanyChoice): Promise<CompanyTarget> {
   if (choice.companyKind === "existing") {
     const c = await db.company.findUnique({ where: { id: choice.companyId }, select: { id: true } });
-    if (!c) throw new ReviewError(404, "ไม่พบสถานประกอบการ");
+    if (!c) throw new UserError(404, "ไม่พบสถานประกอบการ");
     return c;
   }
   if (choice.companyKind === "new") return { create: { name: choice.newName, address: choice.newAddress } };
   const place = await findPlace(choice.placeQuery, choice.placeId);
-  if (!place) throw new ReviewError(400, "ไม่พบสถานที่ที่เลือก ค้นหาแล้วเลือกใหม่อีกครั้ง");
+  if (!place) throw new UserError(400, "ไม่พบสถานที่ที่เลือก ค้นหาแล้วเลือกใหม่อีกครั้ง");
   const { placeId, ...rest } = place;
   return { create: { ...rest, googlePlaceId: placeId } };
 }
@@ -57,7 +47,7 @@ export async function submitReview(choice: CompanyChoice, fields: ReviewFields, 
   // เช็คก่อนอัปโหลดรูปเพื่อไม่ทิ้งรูปค้าง — ตัวตัดสินจริงคือ @@unique ที่จับ P2002 ข้างล่าง
   if ("id" in target) {
     const mine = await db.review.findUnique({ where: { companyId_userId: { companyId: target.id, userId: user.id } }, select: { id: true } });
-    if (mine) throw new ReviewError(409, ALREADY_REVIEWED);
+    if (mine) throw new UserError(409, ALREADY_REVIEWED);
   }
   const urls = await uploadAll(photos);
   try {
@@ -75,7 +65,7 @@ export async function submitReview(choice: CompanyChoice, fields: ReviewFields, 
       });
     });
   } catch (e) {
-    if (isPrismaError(e, "P2002")) throw new ReviewError(409, ALREADY_REVIEWED);
+    if (isPrismaError(e, "P2002")) throw new UserError(409, ALREADY_REVIEWED);
     throw e;
   }
 }
@@ -84,7 +74,7 @@ export async function resubmitReview(id: string, fields: ReviewFields, photos: F
   const user = await requireRole("STUDENT");
   const review = await db.review.findUnique({ where: { id }, select: { userId: true, status: true } });
   // ไม่แยกว่า "ไม่มี" กับ "มีแต่แก้ไม่ได้" — ไม่ให้เดา id รีวิวของคนอื่น
-  if (!review || !canEditReview(review, user.id)) throw new ReviewError(404, "ไม่พบรีวิวที่แก้ไขได้");
+  if (!review || !canEditReview(review, user.id)) throw new UserError(404, "ไม่พบรีวิวที่แก้ไขได้");
   checkPhotos(photos);
   const urls = await uploadAll(photos);
   try {
@@ -97,7 +87,7 @@ export async function resubmitReview(id: string, fields: ReviewFields, photos: F
       });
     });
   } catch (e) {
-    if (isPrismaError(e, "P2025")) throw new ReviewError(404, "ไม่พบรีวิวที่แก้ไขได้");
+    if (isPrismaError(e, "P2025")) throw new UserError(404, "ไม่พบรีวิวที่แก้ไขได้");
     throw e;
   }
   return { id };

@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth";
-import { readReviewForm, reviewErrorResponse } from "@/lib/review-request";
+import { userErrorResponse } from "@/lib/http";
+import { readReviewForm } from "@/lib/review-request";
 import { resubmitReview } from "@/lib/reviews";
 import { idSchema } from "@/lib/validation";
 
@@ -13,6 +14,6 @@ export async function PUT(req: Request, ctx: RouteContext<"/api/reviews/[id]">) 
   try {
     return Response.json(await resubmitReview(id.data, form.data, form.photos));
   } catch (e) {
-    return reviewErrorResponse(e);
+    return userErrorResponse(e);
   }
 }

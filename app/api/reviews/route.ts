@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth";
-import { badRequest, readReviewForm, reviewErrorResponse } from "@/lib/review-request";
+import { badRequest, userErrorResponse } from "@/lib/http";
+import { readReviewForm } from "@/lib/review-request";
 import { submitReview } from "@/lib/reviews";
 import { companyChoiceSchema } from "@/lib/validation";
 
@@ -12,6 +13,6 @@ export async function POST(req: Request) {
   try {
     return Response.json(await submitReview(choice.data, form.data, form.photos), { status: 201 });
   } catch (e) {
-    return reviewErrorResponse(e);
+    return userErrorResponse(e);
   }
 }

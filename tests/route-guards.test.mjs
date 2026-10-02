@@ -25,7 +25,7 @@ test("มีหน้า 401 และ 403", () => {
 });
 
 // DAL ทุกไฟล์: ทุก export async function ต้องมีบรรทัด guard ระดับบนสุดของฟังก์ชันหนึ่งบรรทัด
-const DAL = ["lib/companies.ts", "lib/reviews.ts"];
+const DAL = ["lib/companies.ts", "lib/reviews.ts", "lib/community.ts"];
 test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
   for (const file of DAL) {
     const src = existsSync(file) ? readFileSync(file, "utf8") : "";
@@ -48,4 +48,14 @@ test("ทุก Route Handler ใน app/api (ยกเว้น auth ของ 
     assert.ok(all > 0, file);
     assert.equal(guarded, all, file);
   }
+});
+
+test("ตัวนับและ query ความคิดเห็นของบอร์ดกรอง APPROVED — บั๊ก v1 ที่พลาดซ้ำสองรอบ", () => {
+  const src = readFileSync("lib/community.ts", "utf8");
+  // _count ของความคิดเห็นบนการ์ดต้องนับเฉพาะที่อนุมัติ
+  assert.match(src, /comments:\s*\{\s*where:\s*APPROVED\s*\}/);
+  // ความคิดเห็นในหน้ากระทู้: ที่อนุมัติ หรือที่รอตรวจของผู้ชมเอง เท่านั้น
+  assert.match(src, /OR:\s*\[\s*APPROVED,\s*\{\s*status:\s*"PENDING",\s*userId:\s*user\.id\s*\}\s*\]/);
+  // ทุก findMany/count ของกระทู้ในบอร์ดสาธารณะใช้ where ที่มี APPROVED
+  assert.match(src, /const where = \{\s*\.\.\.APPROVED/);
 });
