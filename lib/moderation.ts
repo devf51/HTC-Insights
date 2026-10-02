@@ -177,7 +177,8 @@ async function applyDecision(tx: Tx, adminId: string, kind: ContentKind, id: str
   const { affected, detail = reason } = await DECIDE[kind](tx, id, input.decision, reason, check);
   for (const a of affected) await notify(tx, a.userId, decisionNotice(a.target, input.decision, a.reason ?? reason));
   await logAdminAction(tx, adminId, `${input.decision === "APPROVED" ? "approve" : "reject"}_${kind}`, { type: kind, id }, detail);
-  return affected.map((a) => a.target.id);
+  // เฉพาะชนิดเดียวกัน — resolveReport ใช้ id ชุดนี้กับคอลัมน์ข้อร้องเรียนของ kind
+  return affected.filter((a) => a.target.kind === kind).map((a) => a.target.id);
 }
 
 /** ตัดสินเนื้อหาหนึ่งชิ้นจากคิวตรวจ — from ค่าเริ่มต้น PENDING */

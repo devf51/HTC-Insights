@@ -15,7 +15,7 @@ async function chartsReady(sheets: HTMLElement[], timeoutMs = 10_000): Promise<b
     sheets.every(
       (s) =>
         !s.querySelector("[data-chart-loading]") &&
-        [...s.querySelectorAll(".recharts-responsive-container")].every((c) => c.querySelector("svg.recharts-surface")),
+        [...s.querySelectorAll(".recharts-responsive-container")].every((c) => c.querySelector(".recharts-wrapper > svg.recharts-surface")),
     );
   const end = Date.now() + timeoutMs;
   while (!ready()) {

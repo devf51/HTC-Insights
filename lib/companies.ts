@@ -107,7 +107,8 @@ export async function pendingCompanies() {
   await requireAdmin();
   // ponytail: 50 แห่งเก่าสุดก่อน เหมือนคิวเนื้อหา
   return db.company.findMany({
-    where: { isVerified: false, employerId: { not: null } },
+    // บัญชีที่ถูกระงับไม่ต้องตรวจ — ไม่งั้นการลงทะเบียนขยะดันรายการจริงตกคิว 50 แห่ง
+    where: { isVerified: false, employer: { user: { isBanned: false } } },
     orderBy: { createdAt: "asc" },
     take: 50,
     select: {
