@@ -48,6 +48,8 @@ next-env.d.ts
 
 # dump ฐานข้อมูล
 *.sql
+# ไฟล์ migration ของ Prisma ต้องเข้า git — เซิร์ฟเวอร์จริงใช้ prisma migrate deploy
+!prisma/migrations/**/migration.sql
 *.sqlite
 *.sqlite3
 *.db

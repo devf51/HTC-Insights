@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 
 // ตารางสิทธิ์ใน docs/superpowers/specs/2026-10-01-phase1-auth-design.md ส่วนที่ 3
 // เทสต์นี้กันไม่ให้ guard หายจาก layout เงียบ ๆ ตอนมีคนแก้หน้า
@@ -24,10 +24,28 @@ test("มีหน้า 401 และ 403", () => {
   assert.ok(existsSync("app/forbidden.tsx"));
 });
 
+// DAL ทุกไฟล์: ทุก export async function ต้องมีบรรทัด guard ระดับบนสุดของฟังก์ชันหนึ่งบรรทัด
+const DAL = ["lib/companies.ts", "lib/reviews.ts"];
 test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
-  const src = existsSync("lib/companies.ts") ? readFileSync("lib/companies.ts", "utf8") : "";
-  const fns = src.match(/^export async function/gm)?.length ?? 0;
-  const guards = src.match(/await requireRole\("STUDENT", "ADMIN"\)/g)?.length ?? 0;
-  assert.ok(fns > 0, "ไม่พบฟังก์ชันใน lib/companies.ts");
-  assert.equal(guards, fns);
+  for (const file of DAL) {
+    const src = existsSync(file) ? readFileSync(file, "utf8") : "";
+    const fns = src.match(/^export async function/gm)?.length ?? 0;
+    const guards = src.match(/^ {2}(?:const \w+ = )?await require(?:User|Role|Admin|SuperAdmin)\(/gm)?.length ?? 0;
+    assert.ok(fns > 0, `ไม่พบฟังก์ชันใน ${file}`);
+    assert.equal(guards, fns, file);
+  }
+});
+
+test("ทุก Route Handler ใน app/api (ยกเว้น auth ของ Auth.js) เรียก guard เป็นบรรทัดแรก", () => {
+  const files = readdirSync("app/api", { recursive: true })
+    .map((f) => `app/api/${String(f).replaceAll("\\", "/")}`)
+    .filter((f) => f.endsWith("/route.ts") && !f.startsWith("app/api/auth/"));
+  assert.ok(files.length > 0, "ไม่พบ Route Handler");
+  for (const file of files) {
+    const src = readFileSync(file, "utf8");
+    const all = src.match(/^export async function (?:GET|POST|PUT|PATCH|DELETE)\b/gm)?.length ?? 0;
+    const guarded = src.match(/^export async function (?:GET|POST|PUT|PATCH|DELETE)\b[^\n]*\{\r?\n {2}await require\w+\(/gm)?.length ?? 0;
+    assert.ok(all > 0, file);
+    assert.equal(guarded, all, file);
+  }
 });

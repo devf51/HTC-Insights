@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DEPARTMENT_VALUES } from "./departments";
+import { parseThaiDate, periodError, workTimeError } from "./review-rules";
 
 // schema ของทุก input จากผู้ใช้ — ผ่านที่นี่ก่อนแตะฐานข้อมูล (CLAUDE.md)
 
@@ -15,4 +16,107 @@ export const companySearchSchema = z.object({
 });
 
 /** id ใน URL — ไม่บังคับรูปแบบ cuid เพราะ seed ใช้ id อ่านง่าย (seed_c1) */
-export const companyIdSchema = z.string().min(1).max(64);
+export const idSchema = z.string().min(1).max(64);
+export const companyIdSchema = idSchema;
+
+// ---------- ฟอร์มรีวิว (multipart → ทุกค่าเป็นสตริง) ----------
+
+const checkbox = z.literal("on").optional().transform((v) => v === "on");
+
+const optionalText = (max: number, label: string) =>
+  z.string().trim().max(max, `${label}ต้องไม่เกิน ${max} ตัวอักษร`).optional().transform((s) => s || null);
+
+const thaiDate = (label: string) =>
+  z.string({ error: `เลือก${label}` }).transform((s, ctx) => {
+    const d = parseThaiDate(s);
+    if (!d) {
+      ctx.addIssue({ code: "custom", message: `${label}ไม่ถูกต้อง` });
+      return z.NEVER;
+    }
+    return d;
+  });
+
+const score = (label: string) =>
+  z.coerce.number({ error: `ให้คะแนน${label}` }).int(`ให้คะแนน${label} 1–5`).min(1, `ให้คะแนน${label} 1–5`).max(5, `ให้คะแนน${label} 1–5`);
+
+const workTime = z
+  .string()
+  .optional()
+  .transform((s) => s || null)
+  .refine((s) => s === null || /^([01]\d|2[0-3]):[0-5]\d$/.test(s), "เวลาต้องอยู่ในรูปแบบ ชม.:นาที");
+
+const allowance = z
+  .string()
+  .optional()
+  .transform((s, ctx) => {
+    if (!s) return null;
+    const n = Number(s);
+    if (!Number.isInteger(n) || n < 0 || n > 10000) {
+      ctx.addIssue({ code: "custom", message: "เบี้ยเลี้ยงต้องเป็นจำนวนเต็ม 0–10,000 บาท" });
+      return z.NEVER;
+    }
+    return n;
+  });
+
+/** ช่องของรีวิว — ใช้ทั้งส่งใหม่และแก้ไข ชื่อฟิลด์ตรงกับคอลัมน์ของ Review */
+export const reviewFieldsSchema = z
+  .object({
+    department: z.enum(DEPARTMENT_VALUES, { error: "เลือกแผนกวิชา" }),
+    gender: z.enum(["MALE", "FEMALE", "PREFER_NOT"], { error: "เลือกเพศ" }),
+    periodStart: thaiDate("วันเริ่มฝึก"),
+    periodEnd: thaiDate("วันสิ้นสุดการฝึก"),
+    dailyAllowance: allowance,
+    hasAccommodation: checkbox,
+    hasTransport: checkbox,
+    workStartTime: workTime,
+    workEndTime: workTime,
+    scoreWork: score("ลักษณะงาน"),
+    scoreEnv: score("สภาพแวดล้อม"),
+    scoreMentor: score("พี่เลี้ยง"),
+    scoreWelfare: score("เบี้ยเลี้ยงและสวัสดิการ"),
+    textWork: z
+      .string({ error: "เล่าลักษณะงานที่ได้ทำ" })
+      .trim()
+      .min(30, "เล่าลักษณะงานอย่างน้อย 30 ตัวอักษร")
+      .max(1000, "ลักษณะงานต้องไม่เกิน 1,000 ตัวอักษร"),
+    textPros: optionalText(500, "ข้อดี"),
+    textCons: optionalText(500, "ข้อควรรู้"),
+    textAdvice: optionalText(500, "คำแนะนำ"),
+    isAnonymous: checkbox,
+  })
+  .superRefine((v, ctx) => {
+    const period = periodError(v.periodStart, v.periodEnd, new Date());
+    if (period) ctx.addIssue({ code: "custom", path: ["periodEnd"], message: period });
+    const time = workTimeError(v.workStartTime, v.workEndTime);
+    if (time) ctx.addIssue({ code: "custom", path: ["workEndTime"], message: time });
+  });
+export type ReviewFields = z.infer<typeof reviewFieldsSchema>;
+
+/** รีวิวใหม่ต้องบอกว่ารีวิวบริษัทไหน — เลือกจากในระบบ จาก Google หรือกรอกเอง */
+export const companyChoiceSchema = z.discriminatedUnion(
+  "companyKind",
+  [
+    z.object({ companyKind: z.literal("existing"), companyId: idSchema }),
+    z.object({
+      companyKind: z.literal("place"),
+      placeId: z.string().min(1).max(300),
+      placeQuery: z.string().trim().min(2).max(100),
+    }),
+    z.object({
+      companyKind: z.literal("new"),
+      newName: z.string({ error: "กรอกชื่อสถานประกอบการ" }).trim().min(2, "กรอกชื่อสถานประกอบการ").max(150, "ชื่อยาวเกิน 150 ตัวอักษร"),
+      newAddress: z.string({ error: "กรอกที่อยู่" }).trim().min(5, "กรอกที่อยู่ให้รุ่นน้องหาเจอ").max(300, "ที่อยู่ยาวเกิน 300 ตัวอักษร"),
+    }),
+  ],
+  { error: "เลือกสถานประกอบการ" },
+);
+export type CompanyChoice = z.infer<typeof companyChoiceSchema>;
+
+/** query string ของ /insights/write-review — ค่าผิดรูปแบบถูกเพิกเฉย */
+export const writeReviewParamsSchema = z.object({
+  q: z.string().trim().transform((s) => s.slice(0, 100)).catch(""),
+  company: idSchema.optional().catch(undefined),
+  place: z.string().min(1).max(300).optional().catch(undefined),
+  new: z.literal("1").optional().catch(undefined),
+  edit: idSchema.optional().catch(undefined),
+});

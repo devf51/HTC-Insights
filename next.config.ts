@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   experimental: {
     authInterrupts: true,
   },
+  // รูปรีวิวอยู่บน Cloudinary (lib/cloudinary.ts) — next/image ต้องรู้จักโดเมน
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "res.cloudinary.com" }],
+  },
 };
 
 export default nextConfig;

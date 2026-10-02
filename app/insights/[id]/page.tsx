@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CompanyMap } from "@/components/CompanyMap";
@@ -36,7 +37,7 @@ export default async function CompanyPage({ params }: PageProps<"/insights/[id]"
       title={c.name}
       lede={c.address ?? undefined}
       actions={
-        <Link href="/insights/write-review" className={buttonClass("primary")}>
+        <Link href={`/insights/write-review?company=${c.id}`} className={buttonClass("primary")}>
           เขียนรีวิว
         </Link>
       }
@@ -138,6 +139,21 @@ function ReviewCard({ r }: { r: CompanyDetail["reviews"][number] }) {
       <ReviewText label="ข้อดี" text={r.textPros} />
       <ReviewText label="ข้อควรรู้" text={r.textCons} />
       <ReviewText label="คำแนะนำถึงรุ่นน้อง" text={r.textAdvice} />
+      {r.photos.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {r.photos.map((p) => (
+            <a
+              key={p.id}
+              href={p.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative block aspect-[4/3] overflow-hidden rounded-md bg-surface-200"
+            >
+              <Image src={p.url} alt="รูปประกอบรีวิว" fill sizes="(min-width: 768px) 280px, 45vw" className="object-cover" />
+            </a>
+          ))}
+        </div>
+      )}
     </Card>
   );
 }

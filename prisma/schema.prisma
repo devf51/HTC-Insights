@@ -1,5 +1,5 @@
 // HTC Insights v2 — ระบบฐานข้อมูลสถานประกอบการนักศึกษาวิทยาลัยเทคนิคหาดใหญ่
-// อ่าน context.md ก่อนแก้ไฟล์นี้ โดยเฉพาะหลักการโดเมน 4 ข้อ
+// อ่าน docs/context.md ก่อนแก้ไฟล์นี้ โดยเฉพาะหลักการโดเมน 4 ข้อ
 
 generator client {
   provider = "prisma-client"
@@ -144,6 +144,9 @@ model Company {
   coverImageUrl String?
   description   String?
   isVerified    Boolean  @default(false)
+  // place_id ของ Google Maps (ผ่าน SerpApi) — unique กันบริษัทเดียวกันถูกสร้างซ้ำเมื่อหลายคนเลือกจากผลค้นหา
+  // SQLite ยอมให้ NULL ซ้ำได้ บริษัทที่กรอกเองจึงไม่ชนกัน
+  googlePlaceId String?  @unique
   employerId    String?
   createdAt     DateTime @default(now())
 
@@ -184,10 +187,8 @@ model Review {
   textCons   String?
   textAdvice String?
 
-  // ไม่ระบุตัวตน: ซ่อนจากทุกคนรวมถึงผู้ดูแล ตัวตนเก็บแบบเข้ารหัส
-  // เปิดเผยได้เฉพาะเมื่อมีการร้องเรียน และต้องลง AuditLog ทุกครั้ง
-  isAnonymous     Boolean @default(false)
-  anonIdentityEnc String?
+  // ไม่ระบุตัวตน: ชื่อไม่แสดงต่อผู้ใช้คนอื่น ผู้ดูแลสืบได้จาก userId (docs/context.md หลักการข้อ 2)
+  isAnonymous Boolean @default(false)
 
   status          ContentStatus @default(PENDING)
   rejectionReason String?

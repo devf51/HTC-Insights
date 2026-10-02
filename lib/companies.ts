@@ -54,7 +54,7 @@ export async function getCompany(id: string) {
     db.review.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      // ห้าม select anonIdentityEnc หรือ userId — ชื่อผู้เขียนออกจากฟังก์ชันนี้ผ่าน reviewAuthor เท่านั้น
+      // ห้าม select userId — ชื่อผู้เขียนออกจากฟังก์ชันนี้ผ่าน reviewAuthor เท่านั้น
       select: {
         id: true,
         department: true,
@@ -71,6 +71,7 @@ export async function getCompany(id: string) {
         textCons: true,
         textAdvice: true,
         isAnonymous: true,
+        photos: { select: { id: true, url: true } },
         user: { select: { name: true } },
       },
     }),

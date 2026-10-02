@@ -37,12 +37,13 @@ type SeedReview = {
   allowance: number | null;
   text: string;
   isAnonymous?: boolean;
+  rejectionReason?: string;
 };
 
 const REVIEWS: SeedReview[] = [
   { id: "seed_r1", companyId: "seed_c1", userId: "seed_u1", department: "แผนกวิชาช่างยนต์", status: "APPROVED", scores: [4, 4, 5, 3], allowance: 250, text: "ได้ซ่อมเครื่องยนต์จริง พี่เลี้ยงสอนละเอียด" },
   { id: "seed_r2", companyId: "seed_c1", userId: "seed_u2", department: "แผนกวิชาช่างยนต์", status: "APPROVED", scores: [5, 4, 4, 4], allowance: 350, text: "งานตรงสาขา มีรถรับส่ง" },
-  { id: "seed_r3", companyId: "seed_c1", userId: "seed_u3", department: "แผนกวิชาช่างยนต์", status: "REJECTED", scores: [1, 1, 1, 1], allowance: 1000, text: "ข้อความรีวิวที่ถูกปฏิเสธ" },
+  { id: "seed_r3", companyId: "seed_c1", userId: "seed_u3", department: "แผนกวิชาช่างยนต์", status: "REJECTED", scores: [1, 1, 1, 1], allowance: 1000, text: "ข้อความรีวิวที่ถูกปฏิเสธ", rejectionReason: "ยังไม่ได้เล่าลักษณะงานที่ทำจริง เพิ่มรายละเอียดอย่างน้อย 30 ตัวอักษร" },
   { id: "seed_r4", companyId: "seed_c1", userId: "seed_u4", department: "แผนกวิชาช่างยนต์", status: "PENDING", scores: [5, 5, 5, 5], allowance: 500, text: "ข้อความรีวิวที่รออนุมัติ" },
   { id: "seed_r5", companyId: "seed_c2", userId: "seed_u1", department: "แผนกวิชาเทคโนโลยีสารสนเทศ", status: "APPROVED", scores: [5, 5, 4, 3], allowance: 300, text: "ได้เขียนเว็บให้ลูกค้าจริง", isAnonymous: true },
   { id: "seed_r6", companyId: "seed_c3", userId: "seed_u2", department: "แผนกวิชาช่างไฟฟ้ากำลัง", status: "PENDING", scores: [4, 4, 4, 4], allowance: 300, text: "ข้อความรีวิวที่รออนุมัติ" },
@@ -58,6 +59,7 @@ async function main() {
     const data = {
       ...r,
       isAnonymous: r.isAnonymous ?? false,
+      rejectionReason: r.rejectionReason ?? null,
       gender: "PREFER_NOT" as const,
       periodStart: new Date("2026-05-01T00:00:00+07:00"),
       periodEnd: new Date("2026-09-30T00:00:00+07:00"),
@@ -73,6 +75,12 @@ async function main() {
     };
     await db.review.upsert({ where: { id: r.id }, create: data, update: data });
   }
+  // รูปตัวอย่างสาธารณะของ Cloudinary (บัญชี demo) — ใช้ตรวจการแสดงผลรูปโดยไม่ต้องมีคีย์
+  await db.reviewPhoto.upsert({
+    where: { id: "seed_p1" },
+    create: { id: "seed_p1", reviewId: "seed_r2", url: "https://res.cloudinary.com/demo/image/upload/sample.jpg" },
+    update: {},
+  });
   const byStatus = await db.review.groupBy({ by: ["status"], where: { id: { startsWith: "seed_" } }, _count: { _all: true } });
   console.log(`seed: ${COMPANIES.length} บริษัท`, byStatus.map((s) => `${s.status}=${s._count._all}`).join(" "));
 }
