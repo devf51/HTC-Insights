@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CircleMarker, MapContainer, Popup, TileLayer } from "react-leaflet";
 import type { MapPin } from "@/lib/company-rules";
 
-const HAT_YAI: [number, number] = [7.0084, 100.4767];
+export const HAT_YAI: [number, number] = [7.0084, 100.4767];
 
 /** CircleMarker เป็น SVG — ไม่ต้องมีไฟล์รูปหมุด (รูปหมุด default ของ Leaflet พังเมื่อผ่าน bundler) */
 export default function CompanyMapInner({ pins }: { pins: MapPin[] }) {

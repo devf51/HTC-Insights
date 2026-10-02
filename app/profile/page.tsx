@@ -2,6 +2,7 @@ import Link from "next/link";
 import { signOut } from "@/auth";
 import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
+import { JobActiveButton } from "@/components/JobActiveButton";
 import { PageShell } from "@/components/PageShell";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClass } from "@/components/ui/Button";
@@ -10,6 +11,8 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { requireUser } from "@/lib/auth";
 import { myPosts } from "@/lib/community";
 import { postTypeLabel } from "@/lib/community-rules";
+import { departmentLabel } from "@/lib/departments";
+import { myEmployer } from "@/lib/jobs";
 import type { Role } from "@/lib/nav";
 import { myReviews } from "@/lib/reviews";
 
@@ -30,8 +33,11 @@ const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", mo
 export default async function ProfilePage({ searchParams }: PageProps<"/profile">) {
   // layout เรียกแล้ว เรียกซ้ำเพื่อเอาข้อมูลผู้ใช้ — getCurrentUser() ห่อ cache() ไม่ query ซ้ำ
   const user = await requireUser();
-  const sent = (await searchParams).sent === "1";
+  const sp = await searchParams;
+  const sent = sp.sent === "1";
+  const posted = sp.posted === "1";
   const [reviews, posts] = user.role === "STUDENT" ? await Promise.all([myReviews(), myPosts()]) : [[], []];
+  const employer = user.role === "EXTERNAL" ? await myEmployer() : null;
 
   async function signOutAction() {
     "use server";
@@ -53,6 +59,11 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
       {sent && (
         <p role="status" className="rounded-lg border border-line bg-signal-tint px-4 py-3">
           ส่งรีวิวแล้ว ผู้ดูแลจะตรวจก่อนเผยแพร่ ติดตามสถานะได้ด้านล่าง
+        </p>
+      )}
+      {posted && (
+        <p role="status" className="rounded-lg border border-line bg-signal-tint px-4 py-3">
+          ส่งประกาศแล้ว ผู้ดูแลจะตรวจก่อนเผยแพร่ ติดตามสถานะได้ด้านล่าง
         </p>
       )}
       <Card
@@ -133,9 +144,70 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
             )}
           </section>
         </>
-      ) : (
-        <EmptyState icon="rate_review">ประกาศของคุณจะแสดงที่นี่</EmptyState>
-      )}
+      ) : user.role === "EXTERNAL" ? (
+        <EmployerSection employer={employer} />
+      ) : null}
     </PageShell>
+  );
+}
+
+function EmployerSection({ employer }: { employer: Awaited<ReturnType<typeof myEmployer>> }) {
+  if (!employer) {
+    return (
+      <EmptyState icon="add_business" title="ยังไม่ได้ลงทะเบียนสถานประกอบการ">
+        <Link href="/employer/register" className="kn-link">
+          ลงทะเบียนเพื่อลงประกาศรับนักศึกษาฝึกงาน
+        </Link>
+      </EmptyState>
+    );
+  }
+  return (
+    <>
+      <section className="flex flex-col gap-4">
+        <SectionHeader title="สถานประกอบการของฉัน" />
+        <Card title={employer.companyName}>
+          <p>{`อีเมลติดต่อที่แสดงในประกาศ: ${employer.contactEmail}`}</p>
+          <p>{`แผนกที่เปิดรับ: ${employer.departments.map(departmentLabel).join(" · ")}`}</p>
+        </Card>
+      </section>
+      <section className="flex flex-col gap-4">
+        <SectionHeader
+          title="ประกาศของฉัน"
+          actions={
+            <Link href="/employer/jobs/new" className={buttonClass("secondary")}>
+              ลงประกาศ
+            </Link>
+          }
+        />
+        {employer.jobs.length === 0 ? (
+          <EmptyState icon="work" title="ยังไม่มีประกาศ" />
+        ) : (
+          employer.jobs.map((j) => (
+            <Card
+              key={j.id}
+              eyebrow={`${departmentLabel(j.department)} · ${thaiDate(j.createdAt)}`}
+              title={
+                j.status === "APPROVED" && j.isActive ? (
+                  <Link href={`/jobs/${j.id}`} className="kn-link">
+                    {j.title}
+                  </Link>
+                ) : (
+                  j.title
+                )
+              }
+              footer={
+                <span className="flex flex-wrap items-center gap-3">
+                  <Badge tone={STATUS[j.status].tone}>{STATUS[j.status].label}</Badge>
+                  {!j.isActive && <Badge>ปิดรับแล้ว</Badge>}
+                  {j.status !== "REJECTED" && <JobActiveButton id={j.id} isActive={j.isActive} />}
+                </span>
+              }
+            >
+              {j.status === "REJECTED" && <p>{`เหตุผล: ${j.rejectionReason ?? "ไม่ระบุ"}`}</p>}
+            </Card>
+          ))
+        )}
+      </section>
+    </>
   );
 }

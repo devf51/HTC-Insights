@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { POST_TYPE_VALUES } from "./community-rules";
 import { DEPARTMENT_VALUES } from "./departments";
+import { departmentsError, pinError } from "./job-rules";
 import { parseThaiDate, periodError, workTimeError } from "./review-rules";
 
 // schema ของทุก input จากผู้ใช้ — ผ่านที่นี่ก่อนแตะฐานข้อมูล (CLAUDE.md)
@@ -158,3 +159,69 @@ export type LikeInput = z.infer<typeof likeInputSchema>;
 
 /** commentId: null = ยกเลิกคำตอบที่ดีที่สุด */
 export const bestAnswerInputSchema = z.object({ commentId: idSchema.nullable() }, { error: "ระบุความคิดเห็น" });
+
+// ---------- ตำแหน่งงานและสถานประกอบการ (JSON) ----------
+
+/** query string ของ /jobs — ค่าผิดรูปแบบถูกเพิกเฉย ลิงก์ที่ส่งต่อกันต้องเปิดได้เสมอ */
+export const jobListParamsSchema = z.object({
+  q: z.string().trim().transform((s) => s.slice(0, 100)).catch(""),
+  department: z.enum(DEPARTMENT_VALUES).optional().catch(undefined),
+  page: z.coerce.number().int().min(1).catch(1),
+});
+
+/** อีเมลที่แสดงในประกาศ — คนละตัวกับอีเมลบัญชีที่ใช้เข้าสู่ระบบ */
+const contactEmail = z
+  .string({ error: "กรอกอีเมลติดต่อ" })
+  .trim()
+  .max(254, "อีเมลยาวเกินไป")
+  .pipe(z.email({ error: "อีเมลติดต่อไม่ถูกต้อง" }));
+
+const phone = z
+  .string()
+  .trim()
+  .optional()
+  .transform((s) => s || null)
+  .refine((s) => s === null || /^[\d+\-\s]{9,20}$/.test(s), "เบอร์โทรใช้ตัวเลข + - หรือเว้นวรรค 9–20 ตัว");
+
+const coord = z.number({ error: "พิกัดไม่ถูกต้อง" }).nullable().default(null);
+
+export const employerInputSchema = z
+  .object({
+    companyName: z
+      .string({ error: "กรอกชื่อสถานประกอบการ" })
+      .trim()
+      .min(2, "กรอกชื่อสถานประกอบการ")
+      .max(150, "ชื่อยาวเกิน 150 ตัวอักษร"),
+    address: z.string({ error: "กรอกที่อยู่" }).trim().min(5, "กรอกที่อยู่ให้นักศึกษาหาเจอ").max(300, "ที่อยู่ยาวเกิน 300 ตัวอักษร"),
+    lat: coord,
+    lng: coord,
+    contactEmail,
+    phone,
+    departments: z.array(z.enum(DEPARTMENT_VALUES, { error: "เลือกแผนกวิชาจากรายการ" }), { error: "เลือกแผนกวิชาที่เปิดรับ" }),
+  })
+  .superRefine((v, ctx) => {
+    const d = departmentsError(v.departments);
+    if (d) ctx.addIssue({ code: "custom", path: ["departments"], message: d });
+    const p = pinError(v.lat, v.lng);
+    if (p) ctx.addIssue({ code: "custom", path: ["lat"], message: p });
+  });
+export type EmployerInput = z.infer<typeof employerInputSchema>;
+
+/** มาจาก FormData ทั้งก้อน — ทุกค่าเป็นสตริง (allowance ใช้ตัวเดียวกับรีวิว) */
+export const jobInputSchema = z.object({
+  title: z.string({ error: "กรอกชื่อตำแหน่ง" }).trim().min(5, "ชื่อตำแหน่งอย่างน้อย 5 ตัวอักษร").max(120, "ชื่อตำแหน่งไม่เกิน 120 ตัวอักษร"),
+  department: z.enum(DEPARTMENT_VALUES, { error: "เลือกแผนกวิชา" }),
+  description: z
+    .string({ error: "กรอกหน้าที่และรายละเอียดงาน" })
+    .trim()
+    .min(20, "หน้าที่และรายละเอียดงานอย่างน้อย 20 ตัวอักษร")
+    .max(2000, "หน้าที่และรายละเอียดงานไม่เกิน 2,000 ตัวอักษร"),
+  qualifications: optionalText(1000, "คุณสมบัติ"),
+  benefits: optionalText(1000, "สวัสดิการ"),
+  allowance,
+  contactEmail,
+  contactPhone: phone,
+});
+export type JobInput = z.infer<typeof jobInputSchema>;
+
+export const jobActiveInputSchema = z.object({ isActive: z.boolean({ error: "ระบุสถานะประกาศ" }) });

@@ -12,6 +12,8 @@ const INNER = [
   "/insights/[id]",
   "/community/new",
   "/community/[id]",
+  "/employer/jobs/new",
+  "/jobs/[id]",
   "/profile/upgrade",
   "/admin/users",
   "/admin/dashboard",

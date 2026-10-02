@@ -18,6 +18,13 @@ const USERS = [1, 2, 3, 4].map((n) => ({
   role: "STUDENT" as const,
 }));
 
+const EXTERNAL_USERS = [1, 2].map((n) => ({
+  id: `seed_e${n}`,
+  email: `seed-e${n}@example.invalid`,
+  name: `ผู้ประกอบการทดสอบ ${n}`,
+  role: "EXTERNAL" as const,
+}));
+
 const COMPANIES = [
   { id: "seed_c1", name: "บริษัท หาดใหญ่ออโต้เซอร์วิส จำกัด", industry: "ซ่อมบำรุงรถยนต์", address: "ถ.เพชรเกษม อ.หาดใหญ่ จ.สงขลา", lat: 7.0067, lng: 100.471, phone: "074-000-001", website: "https://example.com", isVerified: true },
   { id: "seed_c2", name: "บริษัท สงขลาไอทีโซลูชั่น จำกัด", industry: "เทคโนโลยีสารสนเทศ", address: "ถ.นิพัทธ์อุทิศ 3 อ.หาดใหญ่", lat: 7.0089, lng: 100.4745, phone: null, website: "javascript:alert(1)", isVerified: false },
@@ -80,8 +87,43 @@ const LIKES = [
   { id: "seed_lk3", userId: "seed_u1", commentId: "seed_cm1" },
 ];
 
+const LOGISTICS = "แผนกวิชาการจัดการโลจิสติกส์และซัพลายเชน";
+const IT = "แผนกวิชาเทคโนโลยีสารสนเทศ";
+const POWER = "แผนกวิชาช่างไฟฟ้ากำลัง";
+
+// อีเมลติดต่อในประกาศ (hr@example.com) จงใจไม่ตรงกับอีเมลบัญชี (seed-e1@example.invalid) — ใช้ตรวจว่าอีเมลบัญชีไม่หลุด
+const EMPLOYER = {
+  id: "seed_emp1",
+  userId: "seed_e1",
+  companyName: "บริษัท ทักษิณโลจิสติกส์ จำกัด",
+  contactEmail: "hr@example.com",
+  phone: "074-000-004",
+  departments: [LOGISTICS, IT, POWER],
+};
+
+type SeedJob = { id: string; department: string; status: ContentStatus; isActive: boolean; title: string; allowance: number | null; rejectionReason?: string };
+
+// ประกาศที่ปิดรับมาก่อน — ถ้ามีคนเปิด j5 ค้างไว้ upsert ตัวนี้ปิดก่อน j1 จึงไม่ชน unique แผนกละหนึ่งประกาศ
+const JOBS: SeedJob[] = [
+  { id: "seed_j5", department: LOGISTICS, status: "APPROVED", isActive: false, title: "พนักงานจัดส่งสินค้า", allowance: 280 },
+  { id: "seed_j4", department: IT, status: "REJECTED", isActive: true, title: "ประกาศที่ถูกปฏิเสธ", allowance: null, rejectionReason: "รายละเอียดงานยังไม่ชัดเจน ระบุหน้าที่ที่นักศึกษาต้องทำ" },
+  { id: "seed_j1", department: LOGISTICS, status: "APPROVED", isActive: true, title: "ผู้ช่วยเจ้าหน้าที่คลังสินค้า", allowance: 300 },
+  { id: "seed_j2", department: IT, status: "APPROVED", isActive: true, title: "ผู้ช่วยดูแลระบบคอมพิวเตอร์ในสำนักงาน", allowance: null },
+  { id: "seed_j3", department: POWER, status: "PENDING", isActive: true, title: "ผู้ช่วยช่างไฟฟ้าในคลังสินค้า", allowance: 250 },
+];
+
+const JOB_COMMON = {
+  companyId: "seed_c4",
+  employerId: EMPLOYER.id,
+  description: "ช่วยงานประจำวันของแผนกร่วมกับพี่เลี้ยง และเรียนรู้ระบบงานจริงของบริษัท",
+  qualifications: "นักศึกษาระดับ ปวช. หรือ ปวส. ที่ต้องฝึกงานภาคเรียนหน้า",
+  benefits: "อาหารกลางวัน และรถรับส่งจากตัวเมืองหาดใหญ่",
+  contactEmail: EMPLOYER.contactEmail,
+  contactPhone: EMPLOYER.phone,
+};
+
 async function main() {
-  for (const u of USERS) await db.user.upsert({ where: { id: u.id }, create: u, update: u });
+  for (const u of [...USERS, ...EXTERNAL_USERS]) await db.user.upsert({ where: { id: u.id }, create: u, update: u });
   for (const c of COMPANIES) await db.company.upsert({ where: { id: c.id }, create: c, update: c });
   for (const { scores, allowance, text, ...r } of REVIEWS) {
     const [scoreWork, scoreEnv, scoreMentor, scoreWelfare] = scores;
@@ -119,9 +161,21 @@ async function main() {
   for (const l of LIKES) await db.communityLike.upsert({ where: { id: l.id }, create: l, update: l });
   await db.communityPost.update({ where: { id: "seed_post1" }, data: { bestAnswerId: "seed_cm1" } });
 
+  // seed_e2 กลับเป็น "ยังไม่ลงทะเบียน" ทุกรอบ · ประกาศที่สคริปต์ทดสอบสร้างให้ seed_emp1 ถูกลบก่อน ไม่งั้นชน unique แผนกละหนึ่งประกาศ
+  await db.employer.deleteMany({ where: { userId: "seed_e2" } });
+  await db.employer.upsert({ where: { id: EMPLOYER.id }, create: EMPLOYER, update: EMPLOYER });
+  await db.company.update({ where: { id: "seed_c4" }, data: { employerId: EMPLOYER.id } });
+  await db.jobPosting.deleteMany({ where: { employerId: EMPLOYER.id, id: { not: { startsWith: "seed_" } } } });
+  for (const { rejectionReason, ...j } of JOBS) {
+    const data = { ...j, ...JOB_COMMON, rejectionReason: rejectionReason ?? null };
+    await db.jobPosting.upsert({ where: { id: j.id }, create: data, update: data });
+  }
+
   const byStatus = await db.review.groupBy({ by: ["status"], where: { id: { startsWith: "seed_" } }, _count: { _all: true } });
   console.log(`seed: ${COMPANIES.length} บริษัท`, byStatus.map((s) => `${s.status}=${s._count._all}`).join(" "));
   console.log(`seed: ${POSTS.length} กระทู้ ${COMMENTS.length} ความคิดเห็น ${LIKES.length} ถูกใจ`);
+  const publicJobs = await db.jobPosting.count({ where: { id: { startsWith: "seed_j" }, status: "APPROVED", isActive: true } });
+  console.log(`seed: 1 สถานประกอบการ ${JOBS.length} ประกาศ เปิดสาธารณะ=${publicJobs}`);
 }
 
 main().finally(() => db.$disconnect());

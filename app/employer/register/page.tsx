@@ -1,16 +1,21 @@
-import { EmptyState } from "@/components/EmptyState";
+import { redirect } from "next/navigation";
+import { EmployerForm } from "@/components/EmployerForm";
 import { PageShell } from "@/components/PageShell";
+import { requireRole } from "@/lib/auth";
+import { myEmployer } from "@/lib/jobs";
 
-export default function EmployerRegisterPage() {
+export default async function EmployerRegisterPage() {
+  // layout ยอม ADMIN ด้วย แต่การลงทะเบียนเป็นของบุคคลภายนอก
+  await requireRole("EXTERNAL");
+  // เมนู "ลงประกาศ" ชี้มาที่นี่ — ลงทะเบียนแล้วพาไปฟอร์มประกาศเลย
+  if (await myEmployer()) redirect("/employer/jobs/new");
   return (
     <PageShell
       eyebrow="สถานประกอบการ"
-      title="ลงทะเบียนและลงประกาศ"
-      lede="ลงทะเบียนสถานประกอบการ ปักหมุดที่ตั้ง แล้วสร้างประกาศรับนักศึกษาฝึกงาน"
+      title="ลงทะเบียนสถานประกอบการ"
+      lede="ลงทะเบียนครั้งเดียว แล้วลงประกาศรับนักศึกษาฝึกงานได้แผนกละหนึ่งประกาศ"
     >
-      <EmptyState icon="add_business" title="ยังเปิดใช้ไม่ได้">
-        การลงทะเบียนสถานประกอบการอยู่ระหว่างพัฒนา
-      </EmptyState>
+      <EmployerForm />
     </PageShell>
   );
 }

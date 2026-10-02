@@ -25,14 +25,21 @@ test("มีหน้า 401 และ 403", () => {
 });
 
 // DAL ทุกไฟล์: ทุก export async function ต้องมีบรรทัด guard ระดับบนสุดของฟังก์ชันหนึ่งบรรทัด
-const DAL = ["lib/companies.ts", "lib/reviews.ts", "lib/community.ts"];
+// ยกเว้นฟังก์ชันสาธารณะที่ระบุชื่อไว้ที่นี่ — เพิ่มฟังก์ชันสาธารณะต้องแก้เทสต์นี้ ให้คนรีวิวเห็นทุกครั้ง
+const DAL = {
+  "lib/companies.ts": [],
+  "lib/reviews.ts": [],
+  "lib/community.ts": [],
+  "lib/jobs.ts": ["listJobs", "getJob"], // เมนูตำแหน่งงานเปิดให้ผู้ที่ยังไม่ล็อกอิน (navFor(null))
+};
 test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
-  for (const file of DAL) {
+  for (const [file, publicFns] of Object.entries(DAL)) {
     const src = existsSync(file) ? readFileSync(file, "utf8") : "";
-    const fns = src.match(/^export async function/gm)?.length ?? 0;
+    const fns = src.match(/^export async function \w+/gm) ?? [];
     const guards = src.match(/^ {2}(?:const \w+ = )?await require(?:User|Role|Admin|SuperAdmin)\(/gm)?.length ?? 0;
-    assert.ok(fns > 0, `ไม่พบฟังก์ชันใน ${file}`);
-    assert.equal(guards, fns, file);
+    assert.ok(fns.length > 0, `ไม่พบฟังก์ชันใน ${file}`);
+    for (const name of publicFns) assert.ok(fns.includes(`export async function ${name}`), `${file}: ไม่พบ ${name}`);
+    assert.equal(guards, fns.length - publicFns.length, file);
   }
 });
 
@@ -58,4 +65,14 @@ test("ตัวนับและ query ความคิดเห็นขอ�
   assert.match(src, /OR:\s*\[\s*APPROVED,\s*\{\s*status:\s*"PENDING",\s*userId:\s*user\.id\s*\}\s*\]/);
   // ทุก findMany/count ของกระทู้ในบอร์ดสาธารณะใช้ where ที่มี APPROVED
   assert.match(src, /const where = \{\s*\.\.\.APPROVED/);
+});
+
+test("ตำแหน่งงานที่สาธารณะเห็นกรอง APPROVED และยังเปิดรับ และไม่ดึงอีเมลบัญชี", () => {
+  const src = readFileSync("lib/jobs.ts", "utf8");
+  assert.match(src, /const PUBLIC_JOB = \{ status: "APPROVED", isActive: true \} as const/);
+  // listJobs (ทั้ง count และ findMany ใช้ where เดียวกัน) + getJob
+  assert.equal(src.match(/\.\.\.PUBLIC_JOB/g)?.length, 2);
+  // อีเมลที่แสดงคือ contactEmail เท่านั้น — user.email ห้ามออกจากไฟล์นี้
+  assert.doesNotMatch(src, /\bemail: true/);
+  assert.doesNotMatch(src, /\buser: \{/);
 });

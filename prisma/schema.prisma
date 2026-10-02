@@ -4,6 +4,8 @@
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
+  // partial unique index — ใช้กับ JobPosting_open_per_department
+  previewFeatures = ["partialIndexes"]
 }
 
 // SQLite ไฟล์เดียว รันบนเซิร์ฟเวอร์ส่วนตัว — ไม่มี scalar list และไม่มีชนิดคอลัมน์แบบ @db.*
@@ -240,6 +242,9 @@ model JobPosting {
   reports  Report[]
 
   @@index([status, isActive, department])
+  // ประกาศที่เปิดรับได้แผนกละหนึ่งต่อสถานประกอบการ (สูงสุดเท่าจำนวนแผนกที่ลงทะเบียน คือ 3)
+  // บังคับที่ฐานข้อมูล — ประกาศที่ปิดรับหรือถูกปฏิเสธไม่นับ · เงื่อนไขต้องตรงกับ isOpen() ใน lib/job-rules.ts
+  @@unique([employerId, department], map: "JobPosting_open_per_department", where: raw("\"isActive\" = 1 AND \"status\" <> 'REJECTED'"))
 }
 
 // ============ เว็บบอร์ดชุมชน ============
