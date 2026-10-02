@@ -21,7 +21,7 @@ export const PAGE_SIZE = 12;
 
 const NO_REVIEWS: CompanyStats = { reviewCount: 0, avgScore: null, avgAllowance: null, departments: [] };
 
-/** ปัดทศนิยมหนึ่งตำแหน่ง — ตัวเลขที่แสดงกับที่ใช้กรองต้องเป็นค่าเดียวกัน */
+/** ปัดทศนิยมหนึ่งตำแหน่ง — ตัวเลขที่แสดงกับที่ใช้กรอง กราฟ และรายงาน A4 ใช้ตัวเดียวกันทั้งระบบ */
 export const round1 = (n: number) => Math.round(n * 10) / 10;
 
 export function summarize(rows: ApprovedReviewRow[]): Map<string, CompanyStats> {

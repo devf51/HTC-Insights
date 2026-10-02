@@ -8,10 +8,9 @@ import { TextField } from "@/components/ui/TextField";
 import { DEPARTMENTS, departmentLabel } from "@/lib/departments";
 import { listJobs } from "@/lib/jobs";
 import { jobListParamsSchema } from "@/lib/validation";
+import { thaiDate } from "@/lib/thai-time";
 
 type Filters = { q: string; department?: string; page: number };
-
-const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
 
 export default async function JobsPage({ searchParams }: PageProps<"/jobs">) {
   const f = jobListParamsSchema.parse(await searchParams);

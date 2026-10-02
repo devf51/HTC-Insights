@@ -46,7 +46,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/admin/
       <div className="grid gap-4 sm:grid-cols-3">
         <Card eyebrow="รีวิวที่เผยแพร่" metric={d.totals.reviews.toLocaleString("th-TH")} />
         <Card eyebrow="คะแนนเฉลี่ยรวม" metric={d.totals.avgScore?.toFixed(1) ?? "–"} />
-        <Card eyebrow="รอตรวจทั้งหมด" metric={d.totals.pending.toLocaleString("th-TH")} />
+        <Card eyebrow="เนื้อหารอตรวจ" metric={d.totals.pending.toLocaleString("th-TH")} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

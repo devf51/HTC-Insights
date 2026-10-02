@@ -1,4 +1,5 @@
-import { requireRole } from "./auth";
+import { logAdminAction, notify } from "./admin";
+import { requireAdmin, requireRole } from "./auth";
 import {
   isListed,
   reviewAuthor,
@@ -9,6 +10,8 @@ import {
   type SearchResult,
 } from "./company-rules";
 import { db } from "./db";
+import { UserError } from "./http";
+import { companyVerifiedNotice } from "./moderation-rules";
 
 // ทุกฟังก์ชันเริ่มด้วย guard เอง — Next 16 ให้ตรวจสิทธิ์ใกล้ข้อมูล เพราะ layout ไม่ re-render ตอนเปลี่ยนหน้า
 // (node_modules/next/dist/docs/01-app/02-guides/authentication.md "Layouts and auth checks")
@@ -98,3 +101,38 @@ export async function getCompany(id: string) {
 }
 
 export type CompanyDetail = NonNullable<Awaited<ReturnType<typeof getCompany>>>;
+
+/** สถานประกอบการที่ลงทะเบียนผ่านบัญชีผู้ประกอบการและรอผู้ดูแลยืนยัน — ยังไม่ขึ้น /insights จนกว่าจะยืนยัน */
+export async function pendingCompanies() {
+  await requireAdmin();
+  // ponytail: 50 แห่งเก่าสุดก่อน เหมือนคิวเนื้อหา
+  return db.company.findMany({
+    where: { isVerified: false, employerId: { not: null } },
+    orderBy: { createdAt: "asc" },
+    take: 50,
+    select: {
+      id: true,
+      name: true,
+      address: true,
+      phone: true,
+      lat: true,
+      lng: true,
+      createdAt: true,
+      employer: { select: { contactEmail: true, user: { select: { name: true, email: true } } } },
+    },
+  });
+}
+
+/** ยืนยันสถานประกอบการ — แจ้งเจ้าของบัญชีผู้ประกอบการและลงประวัติในทรานแซกชันเดียว (หลักการโดเมนข้อ 3–4) */
+export async function verifyCompany(id: string): Promise<{ isVerified: true }> {
+  const admin = await requireAdmin();
+  await db.$transaction(async (tx) => {
+    const c = await tx.company.findUnique({ where: { id }, select: { name: true, isVerified: true, employer: { select: { userId: true } } } });
+    if (!c) throw new UserError(404, "ไม่พบสถานประกอบการ");
+    if (c.isVerified) throw new UserError(409, "สถานประกอบการนี้ยืนยันแล้ว รีเฟรชหน้าเพื่อดูสถานะล่าสุด");
+    await tx.company.update({ where: { id }, data: { isVerified: true } });
+    if (c.employer) await notify(tx, c.employer.userId, companyVerifiedNotice(c.name));
+    await logAdminAction(tx, admin.id, "verify_company", { type: "company", id }, c.name);
+  });
+  return { isVerified: true };
+}

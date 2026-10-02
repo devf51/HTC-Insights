@@ -259,7 +259,7 @@ export type ModerationInput = z.infer<typeof moderationInputSchema>;
 
 /** query string ของ /admin — ค่าผิดรูปแบบถูกเพิกเฉย */
 export const adminParamsSchema = z.object({
-  tab: z.enum(["pending", "upgrades", "reports", "history"]).catch("pending"),
+  tab: z.enum(["pending", "upgrades", "companies", "reports", "history"]).catch("pending"),
   page: z.coerce.number().int().min(1).catch(1),
 });
 

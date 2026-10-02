@@ -14,9 +14,7 @@ import { safeUrl } from "@/lib/company-rules";
 import { departmentLabel } from "@/lib/departments";
 import { SCORE_DIMENSIONS } from "@/lib/review-rules";
 import { companyIdSchema } from "@/lib/validation";
-
-// เวลาไทยทั้งระบบ (บทเรียน v1) — th-TH แสดงปี พ.ศ.
-const monthYear = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
+import { thaiMonthYear } from "@/lib/thai-time";
 
 export default async function CompanyPage({ params }: PageProps<"/insights/[id]">) {
   const id = companyIdSchema.safeParse((await params).id);
@@ -119,7 +117,7 @@ export default async function CompanyPage({ params }: PageProps<"/insights/[id]"
 function ReviewCard({ r }: { r: CompanyDetail["reviews"][number] }) {
   return (
     <Card
-      eyebrow={`${departmentLabel(r.department)} · ${monthYear(r.periodStart)} – ${monthYear(r.periodEnd)}`}
+      eyebrow={`${departmentLabel(r.department)} · ${thaiMonthYear(r.periodStart)} – ${thaiMonthYear(r.periodEnd)}`}
       metric={r.scoreOverall.toFixed(1)}
       title={r.author}
       footer={

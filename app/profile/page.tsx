@@ -16,8 +16,7 @@ import { postTypeLabel } from "@/lib/community-rules";
 import { departmentLabel } from "@/lib/departments";
 import { myEmployer } from "@/lib/jobs";
 import { myReviews } from "@/lib/reviews";
-
-const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
+import { thaiDate } from "@/lib/thai-time";
 
 export default async function ProfilePage({ searchParams }: PageProps<"/profile">) {
   // layout เรียกแล้ว เรียกซ้ำเพื่อเอาข้อมูลผู้ใช้ — getCurrentUser() ห่อ cache() ไม่ query ซ้ำ

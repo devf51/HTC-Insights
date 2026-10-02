@@ -89,7 +89,7 @@ test("Notification และ AuditLog ถูกเขียนผ่าน lib/a
     .filter((f) => /\.tsx?$/.test(f) && !f.startsWith("app/generated/") && f !== "lib/admin.ts");
   const direct = files.filter((f) => /\.(notification|auditLog)\.(create|createMany|upsert)\(/.test(readFileSync(f, "utf8")));
   assert.deepEqual(direct, []);
-  for (const f of ["lib/moderation.ts", "lib/upgrades.ts", "lib/users.ts"]) {
+  for (const f of ["lib/moderation.ts", "lib/upgrades.ts", "lib/users.ts", "lib/companies.ts"]) {
     const src = readFileSync(f, "utf8");
     assert.match(src, /db\.\$transaction/, f);
     assert.match(src, /await logAdminAction\(tx,/, f);

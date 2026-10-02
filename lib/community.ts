@@ -92,16 +92,19 @@ export async function createPost(input: PostInput): Promise<{ id: string }> {
 
 export async function createComment(input: CommentInput): Promise<{ id: string }> {
   const user = await requireRole("STUDENT");
-  const post = await db.communityPost.findUnique({ where: { id: input.postId }, select: { status: true } });
-  if (!post || post.status !== "APPROVED") throw new UserError(404, "ไม่พบกระทู้");
-  if (input.parentId) {
-    const parent = await db.communityComment.findUnique({ where: { id: input.parentId }, select: { postId: true, status: true } });
-    // ตอบได้เฉพาะความคิดเห็นที่เผยแพร่แล้วในกระทู้เดียวกัน — ไม่งั้นคำตอบหลุดบริบทเมื่อคนอื่นมองไม่เห็นต้นทาง
-    if (!parent || parent.postId !== input.postId || parent.status !== "APPROVED") {
-      throw new UserError(400, "ตอบกลับได้เฉพาะความคิดเห็นที่เผยแพร่แล้วในกระทู้นี้");
+  // ตรวจและสร้างในทรานแซกชันเดียว — ผู้ดูแลถอนกระทู้หรือต้นทางพร้อมกันจะไม่เหลือคำตอบค้างใต้ต้นทางที่ถูกปฏิเสธ
+  return db.$transaction(async (tx) => {
+    const post = await tx.communityPost.findUnique({ where: { id: input.postId }, select: { status: true } });
+    if (!post || post.status !== "APPROVED") throw new UserError(404, "ไม่พบกระทู้");
+    if (input.parentId) {
+      const parent = await tx.communityComment.findUnique({ where: { id: input.parentId }, select: { postId: true, status: true } });
+      // ตอบได้เฉพาะความคิดเห็นที่เผยแพร่แล้วในกระทู้เดียวกัน — ไม่งั้นคำตอบหลุดบริบทเมื่อคนอื่นมองไม่เห็นต้นทาง
+      if (!parent || parent.postId !== input.postId || parent.status !== "APPROVED") {
+        throw new UserError(400, "ตอบกลับได้เฉพาะความคิดเห็นที่เผยแพร่แล้วในกระทู้นี้");
+      }
     }
-  }
-  return db.communityComment.create({ data: { ...input, userId: user.id }, select: { id: true } });
+    return tx.communityComment.create({ data: { ...input, userId: user.id }, select: { id: true } });
+  });
 }
 
 export async function toggleLike(input: LikeInput): Promise<{ liked: boolean; count: number }> {
@@ -131,16 +134,19 @@ export async function toggleLike(input: LikeInput): Promise<{ liked: boolean; co
 
 export async function setBestAnswer(postId: string, commentId: string | null): Promise<{ bestAnswerId: string | null }> {
   const user = await requireRole("STUDENT");
-  const post = await db.communityPost.findUnique({ where: { id: postId }, select: { id: true, userId: true, type: true, status: true } });
-  if (!post || !canView(post, user.id)) throw new UserError(404, "ไม่พบกระทู้");
-  const comment = commentId
-    ? await db.communityComment.findUnique({ where: { id: commentId }, select: { postId: true, userId: true, status: true } })
-    : null;
-  if (commentId && !comment) throw new UserError(400, "ไม่พบความคิดเห็นนี้ในกระทู้");
-  const err = bestAnswerError(post, comment, user.id);
-  if (err) throw new UserError(post.userId === user.id ? 400 : 403, err);
-  // bestAnswerId ช่องเดียวต่อกระทู้ — ตั้งใหม่แทนที่ของเดิมเอง ไม่ต้องล้าง
-  await db.communityPost.update({ where: { id: postId }, data: { bestAnswerId: commentId } });
+  // ตรวจและตั้งในทรานแซกชันเดียว — ผู้ดูแลปฏิเสธความคิดเห็นพร้อมกันจะไม่เหลือคำตอบที่ดีที่สุดชี้ความคิดเห็นที่ถูกปฏิเสธ
+  await db.$transaction(async (tx) => {
+    const post = await tx.communityPost.findUnique({ where: { id: postId }, select: { id: true, userId: true, type: true, status: true } });
+    if (!post || !canView(post, user.id)) throw new UserError(404, "ไม่พบกระทู้");
+    const comment = commentId
+      ? await tx.communityComment.findUnique({ where: { id: commentId }, select: { postId: true, userId: true, status: true } })
+      : null;
+    if (commentId && !comment) throw new UserError(400, "ไม่พบความคิดเห็นนี้ในกระทู้");
+    const err = bestAnswerError(post, comment, user.id);
+    if (err) throw new UserError(post.userId === user.id ? 400 : 403, err);
+    // bestAnswerId ช่องเดียวต่อกระทู้ — ตั้งใหม่แทนที่ของเดิมเอง ไม่ต้องล้าง
+    await tx.communityPost.update({ where: { id: postId }, data: { bestAnswerId: commentId } });
+  });
   return { bestAnswerId: commentId };
 }
 

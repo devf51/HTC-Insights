@@ -12,14 +12,11 @@ import { countNodes, postTypeLabel } from "@/lib/community-rules";
 import { cx } from "@/lib/cx";
 import { departmentLabel } from "@/lib/departments";
 import { idSchema } from "@/lib/validation";
+import { thaiDateTime } from "@/lib/thai-time";
 
 type Data = NonNullable<Awaited<ReturnType<typeof getPost>>>;
 type Node = Data["comments"][number];
 type Ctx = { postId: string; bestAnswerId: string | null; canAct: boolean; canPickBest: boolean; viewerId: string };
-
-// เวลาไทยทั้งระบบ (บทเรียน v1)
-const thaiDateTime = (d: Date) =>
-  d.toLocaleString("th-TH", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
 
 export default async function PostPage({ params }: PageProps<"/community/[id]">) {
   const id = idSchema.safeParse((await params).id);

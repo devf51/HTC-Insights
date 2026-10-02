@@ -5,9 +5,7 @@ import { PageShell } from "@/components/PageShell";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { myNotifications } from "@/lib/notifications";
-
-const thaiDateTime = (d: Date) =>
-  d.toLocaleString("th-TH", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
+import { thaiDateTime } from "@/lib/thai-time";
 
 export default async function NotificationsPage() {
   // myNotifications เรียก requireUser — ไม่ล็อกอินได้หน้า 401

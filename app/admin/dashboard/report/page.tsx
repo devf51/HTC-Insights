@@ -7,6 +7,7 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { dashboardData, dateRange, type DashboardData } from "@/lib/dashboard";
 import { toThaiDateInput } from "@/lib/review-rules";
 import { dashboardParamsSchema } from "@/lib/validation";
+import { thaiDateTime } from "@/lib/thai-time";
 
 // แผ่นรายงานใช้สี hex ผ่าน style เท่านั้น — class สีของ Tailwind เป็น oklch ซึ่ง html2canvas อ่านไม่ออก (CLAUDE.md)
 const C = { ink: "#15181b", muted: "#565b60", line: "#d9dbd5", paper: "#ffffff", head: "#0f6b52" };
@@ -14,9 +15,6 @@ const PAGES = 3;
 // แถวกราฟแนวนอนในรายงาน — 18 แผนกและ 10 บริษัทต้องพอดีแผ่น 1123px (ตรวจด้วยข้อมูลกรณีเลวร้ายที่สุดแล้ว)
 const ROW = 26;
 const SHEET: CSSProperties = { width: 794, height: 1123, padding: 48, background: C.paper, color: C.ink, boxSizing: "border-box", overflow: "hidden" };
-const thaiDateTime = (d: Date) =>
-  d.toLocaleString("th-TH", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
-
 export default async function ReportPage({ searchParams }: PageProps<"/admin/dashboard/report">) {
   await requireSuperAdmin();
   const p = dashboardParamsSchema.parse(await searchParams);
@@ -88,7 +86,7 @@ function Sheet({ page, d, printedAt, children }: { page: number; d: DashboardDat
             วิทยาลัยเทคนิคหาดใหญ่
           </p>
           <p className="text-[22px] leading-8">รายงานสรุประบบฐานข้อมูลสถานประกอบการ</p>
-          <p style={{ color: C.muted }} className="text-[13px]">{`ช่วงข้อมูล: ${d.range} · พิมพ์เมื่อ ${thaiDateTime(printedAt)}`}</p>
+          <p style={{ color: C.muted }} className="text-[13px]">{`ช่วงข้อมูล: ${d.range} · พิมพ์เมื่อ ${thaiDateTime(printedAt, "long")}`}</p>
         </div>
         <p style={{ color: C.muted }} className="text-[13px]">{`หน้า ${page}/${PAGES}`}</p>
       </header>

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { ModerationActions } from "@/components/ModerationActions";
 import { ReportActions } from "@/components/ReportActions";
+import { VerifyCompanyButton } from "@/components/VerifyCompanyButton";
 import { PageShell } from "@/components/PageShell";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
@@ -16,14 +17,14 @@ import { actionLabel, excerpt, kindLabel, targetLabel, type ReportKind } from "@
 import { auditLog, pendingQueue, pendingReports } from "@/lib/moderation";
 import { pendingUpgrades } from "@/lib/upgrades";
 import { requireAdmin } from "@/lib/auth";
+import { pendingCompanies } from "@/lib/companies";
 import { adminParamsSchema } from "@/lib/validation";
-
-const thaiDateTime = (d: Date) =>
-  d.toLocaleString("th-TH", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Bangkok" });
+import { thaiDateTime } from "@/lib/thai-time";
 
 const TABS = [
   { value: "pending", label: "รอตรวจ" },
   { value: "upgrades", label: "คำขอยืนยันสิทธิ์" },
+  { value: "companies", label: "สถานประกอบการ" },
   { value: "reports", label: "ข้อร้องเรียน" },
   { value: "history", label: "ประวัติผู้ดูแล" },
 ] as const;
@@ -58,7 +59,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           ))}
         </div>
       </nav>
-      {p.tab === "history" ? <History page={p.page} /> : p.tab === "upgrades" ? <Upgrades /> : p.tab === "reports" ? <Reports /> : <Pending />}
+      {p.tab === "history" ? <History page={p.page} /> : p.tab === "upgrades" ? <Upgrades /> : p.tab === "companies" ? <Companies /> : p.tab === "reports" ? <Reports /> : <Pending />}
     </PageShell>
   );
 }
@@ -141,7 +142,7 @@ async function Pending() {
             <Who user={c.user} />
             {c.parent && <Text label="ตอบกลับ">{c.parent.body}</Text>}
             <Text>{c.body}</Text>
-            {(c.post.status !== "APPROVED" || (c.parent && c.parent.status !== "APPROVED")) && (
+            {c.parent && c.parent.status !== "APPROVED" && (
               <Badge tone="warning">ต้นทางยังไม่เผยแพร่ อนุมัติไม่ได้</Badge>
             )}
           </Card>
@@ -227,6 +228,24 @@ async function Upgrades() {
             <a href={u.cardImageUrl} target="_blank" rel="noopener noreferrer" className="kn-link">
               ดูรูปบัตรนักศึกษา
             </a>
+          </Card>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+async function Companies() {
+  const items = await pendingCompanies();
+  if (items.length === 0) return <EmptyState icon="domain_verification" title="ไม่มีสถานประกอบการรอยืนยัน" />;
+  return (
+    <ul className="flex flex-col gap-4">
+      {items.map((c) => (
+        <li key={c.id}>
+          <Card eyebrow={thaiDateTime(c.createdAt)} title={c.name} footer={<VerifyCompanyButton id={c.id} />}>
+            {c.employer && <Who user={c.employer.user} />}
+            <Text label="ที่อยู่">{c.address}</Text>
+            <p>{`ติดต่อ ${c.employer?.contactEmail ?? "-"}${c.phone ? ` ${c.phone}` : ""}${c.lat === null ? " · ไม่ได้ปักหมุด" : ""}`}</p>
           </Card>
         </li>
       ))}

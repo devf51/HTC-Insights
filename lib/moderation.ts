@@ -2,7 +2,7 @@ import type { Prisma } from "@/app/generated/prisma/client";
 import { logAdminAction, notify } from "./admin";
 import { requireAdmin } from "./auth";
 import { pageWindow } from "./community-rules";
-import { db, isPrismaError } from "./db";
+import { db } from "./db";
 import { UserError } from "./http";
 import {
   AUDIT_PER_PAGE,
@@ -36,7 +36,6 @@ const WHO = { select: { name: true, email: true } } as const;
 // ponytail: คิวละไม่เกิน 50 รายการ เก่าสุดก่อน — วิทยาลัยเดียว ถ้าค้างเกินนี้บ่อยค่อยแบ่งหน้า
 const QUEUE = { orderBy: { createdAt: "asc" }, take: 50 } as const;
 const STALE = "ผู้ดูแลคนอื่นตัดสินเนื้อหานี้ไปแล้ว รีเฟรชหน้าเพื่อดูสถานะล่าสุด";
-const OPEN_TAKEN = "สถานประกอบการนี้มีประกาศที่เปิดรับในแผนกเดียวกันอยู่แล้ว";
 
 export async function pendingQueue() {
   await requireAdmin();
@@ -65,15 +64,17 @@ export async function pendingQueue() {
       ...QUEUE,
       select: { id: true, type: true, department: true, title: true, body: true, createdAt: true, user: WHO },
     }),
+    // ความคิดเห็นในกระทู้ที่ถูกถอนหายไปพร้อมกระทู้โดยไม่แจ้งผู้เขียน (ข้อตกลง Phase 6b) — ไม่ต้องตรวจ
+    // ตัวนับรอตรวจในแดชบอร์ดใช้เงื่อนไขเดียวกัน (lib/dashboard.ts)
     db.communityComment.findMany({
-      where: PENDING,
+      where: { ...PENDING, post: { status: "APPROVED" } },
       ...QUEUE,
       select: {
         id: true,
         body: true,
         createdAt: true,
         user: WHO,
-        post: { select: { id: true, title: true, status: true } },
+        post: { select: { id: true, title: true } },
         parent: { select: { body: true, status: true } },
       },
     }),
@@ -155,15 +156,19 @@ const decideJob: Decide = async (tx, id, decision, reason, check) => {
   const j = await tx.jobPosting.findUnique({ where: { id }, select: { status: true, title: true, employer: { select: { userId: true } } } });
   if (!j) throw new UserError(404, "ไม่พบประกาศ");
   check(j);
-  // from ไม่มี REJECTED จึงไม่ย้ายออกจาก REJECTED · P2002 จาก JobPosting_open_per_department ยังจับใน moderate เผื่อไว้
+  // ไม่ชน JobPosting_open_per_department: PENDING นับใน index อยู่แล้ว และ REJECTED ไม่นับ
+  // ถ้าวันหนึ่ง from รับ REJECTED (ย้ายกลับจากที่ปฏิเสธ) ต้องจับ P2002 เป็น 409
   await tx.jobPosting.update({ where: { id }, data: { status: decision, rejectionReason: reason } });
   return { affected: [{ userId: j.employer.userId, target: { kind: "job", id, title: excerpt(j.title) } }] };
 };
 
 const DECIDE: Record<ContentKind, Decide> = { review: decideReview, post: decidePost, comment: decideComment, job: decideJob };
 
-/** ตัดสินในทรานแซกชันของผู้เรียก — moderate() และ resolveReport() ใช้ตัวเดียวกัน ไม่มีตรรกะถอนชุดที่สอง */
-async function applyDecision(tx: Tx, adminId: string, kind: ContentKind, id: string, input: ModerationInput) {
+/**
+ * ตัดสินในทรานแซกชันของผู้เรียก — moderate() และ resolveReport() ใช้ตัวเดียวกัน ไม่มีตรรกะถอนชุดที่สอง
+ * คืน id เนื้อหาชนิดเดียวกันที่ได้รับผล (ความคิดเห็น: ต้นทาง + คำตอบใต้มันที่ถูกปฏิเสธตาม)
+ */
+async function applyDecision(tx: Tx, adminId: string, kind: ContentKind, id: string, input: ModerationInput): Promise<string[]> {
   const reason = input.decision === "REJECTED" ? input.reason : null;
   // ตัดสินได้เฉพาะเมื่อสถานะยังเป็นอย่างที่ผู้ดูแลเห็นตอนกด — ผู้ดูแลสองคนกดพร้อมกันหรือหน้าค้าง ไม่ตัดสินทับกัน
   const check = (cur: Current) => {
@@ -172,17 +177,13 @@ async function applyDecision(tx: Tx, adminId: string, kind: ContentKind, id: str
   const { affected, detail = reason } = await DECIDE[kind](tx, id, input.decision, reason, check);
   for (const a of affected) await notify(tx, a.userId, decisionNotice(a.target, input.decision, a.reason ?? reason));
   await logAdminAction(tx, adminId, `${input.decision === "APPROVED" ? "approve" : "reject"}_${kind}`, { type: kind, id }, detail);
+  return affected.map((a) => a.target.id);
 }
 
 /** ตัดสินเนื้อหาหนึ่งชิ้นจากคิวตรวจ — from ค่าเริ่มต้น PENDING */
 export async function moderate(kind: ContentKind, id: string, input: ModerationInput): Promise<{ status: Decision }> {
   const admin = await requireAdmin();
-  try {
-    await db.$transaction((tx) => applyDecision(tx, admin.id, kind, id, input));
-  } catch (e) {
-    if (isPrismaError(e, "P2002")) throw new UserError(409, OPEN_TAKEN);
-    throw e;
-  }
+  await db.$transaction((tx) => applyDecision(tx, admin.id, kind, id, input));
   return { status: input.decision };
 }
 
@@ -225,38 +226,36 @@ export async function pendingReports() {
   });
 }
 
-/** จัดการข้อร้องเรียน — ถอนเนื้อหาผ่าน applyDecision แล้วปิดทุกข้อร้องเรียนที่รอของเนื้อหาชิ้นนั้น · ทางอื่นปิดเฉพาะเรื่องนี้ */
+/**
+ * จัดการข้อร้องเรียน — ถอนเนื้อหาผ่าน applyDecision แล้วปิดทุกข้อร้องเรียนที่รอของเนื้อหาที่หายจากสาธารณะ
+ * (ตัวมันเอง คำตอบใต้ความคิดเห็นที่ถูกถอนตาม และความคิดเห็นในกระทู้ที่ถูกถอน) · ทางอื่นปิดเฉพาะเรื่องนี้
+ */
 export async function resolveReport(id: string, input: ReportDecision): Promise<{ status: "RESOLVED" | "DISMISSED" }> {
   const admin = await requireAdmin();
   const status = input.action === "dismiss" ? "DISMISSED" : "RESOLVED";
-  try {
-    await db.$transaction(async (tx) => {
-      const r = await tx.report.findUnique({
-        where: { id },
-        select: { status: true, reporterId: true, reviewId: true, postId: true, commentId: true, jobId: true, companyId: true },
-      });
-      if (!r) throw new UserError(404, "ไม่พบข้อร้องเรียน");
-      if (r.status !== "PENDING") throw new UserError(409, "ข้อร้องเรียนนี้ถูกจัดการไปแล้ว รีเฟรชหน้าเพื่อดูสถานะล่าสุด");
-      const target = reportTarget(r);
-      if (!target) throw new UserError(404, "ไม่พบเนื้อหาที่ถูกรายงาน");
-      const err = reportActionError(target.kind, input.action);
-      if (err) throw new UserError(400, err);
-
-      let closing = [{ id, reporterId: r.reporterId }];
-      if (input.action === "withdraw" && target.kind !== "company") {
-        await applyDecision(tx, admin.id, target.kind, target.id, { decision: "REJECTED", from: "APPROVED", reason: input.note });
-        closing = await tx.report.findMany({
-          where: { status: "PENDING", [REPORT_COLUMN[target.kind]]: target.id } as Prisma.ReportWhereInput,
-          select: { id: true, reporterId: true },
-        });
-      }
-      await tx.report.updateMany({ where: { id: { in: closing.map((c) => c.id) } }, data: { status, resolution: input.note } });
-      for (const c of closing) await notify(tx, c.reporterId, reportNotice(target.kind, input.action, input.note));
-      await logAdminAction(tx, admin.id, `${input.action}_report`, { type: "report", id }, input.note);
+  await db.$transaction(async (tx) => {
+    const r = await tx.report.findUnique({
+      where: { id },
+      select: { status: true, reporterId: true, reviewId: true, postId: true, commentId: true, jobId: true, companyId: true },
     });
-  } catch (e) {
-    if (isPrismaError(e, "P2002")) throw new UserError(409, OPEN_TAKEN);
-    throw e;
-  }
+    if (!r) throw new UserError(404, "ไม่พบข้อร้องเรียน");
+    if (r.status !== "PENDING") throw new UserError(409, "ข้อร้องเรียนนี้ถูกจัดการไปแล้ว รีเฟรชหน้าเพื่อดูสถานะล่าสุด");
+    const target = reportTarget(r);
+    if (!target) throw new UserError(404, "ไม่พบเนื้อหาที่ถูกรายงาน");
+    const err = reportActionError(target.kind, input.action);
+    if (err) throw new UserError(400, err);
+
+    let closing = [{ id, reporterId: r.reporterId, commentId: r.commentId }];
+    if (input.action === "withdraw" && target.kind !== "company") {
+      const ids = await applyDecision(tx, admin.id, target.kind, target.id, { decision: "REJECTED", from: "APPROVED", reason: input.note });
+      const hidden = [{ [REPORT_COLUMN[target.kind]]: { in: ids } } as Prisma.ReportWhereInput];
+      if (target.kind === "post") hidden.push({ comment: { postId: target.id } });
+      closing = await tx.report.findMany({ where: { status: "PENDING", OR: hidden }, select: { id: true, reporterId: true, commentId: true } });
+    }
+    await tx.report.updateMany({ where: { id: { in: closing.map((c) => c.id) } }, data: { status, resolution: input.note } });
+    // ข้อร้องเรียนความคิดเห็นในกระทู้ที่ถูกถอน — บอกผู้รายงานตามสิ่งที่เขารายงาน
+    for (const c of closing) await notify(tx, c.reporterId, reportNotice(c.commentId ? "comment" : target.kind, input.action, input.note));
+    await logAdminAction(tx, admin.id, `${input.action}_report`, { type: "report", id }, input.note);
+  });
   return { status };
 }

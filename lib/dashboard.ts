@@ -1,5 +1,6 @@
 import { requireSuperAdmin } from "./auth";
-import { approvalRows, dateRange, departmentSeries, dimensionSeries, round1, topCompanySeries, type DateRange } from "./dashboard-rules";
+import { round1 } from "./company-rules";
+import { approvalRows, dateRange, departmentSeries, dimensionSeries, topCompanySeries, type DateRange } from "./dashboard-rules";
 import { db } from "./db";
 import { departmentLabel } from "./departments";
 import { kindLabel } from "./moderation-rules";
@@ -27,9 +28,10 @@ export async function dashboardData(range: DateRange) {
     db.review.groupBy({ by: ["companyId"], where: approvedReviews, ...COUNT, _avg: { scoreOverall: true } }),
     db.review.groupBy({ by: ["status"], where: created, ...COUNT }),
     db.communityPost.groupBy({ by: ["status"], where: created, ...COUNT }),
-    // ความคิดเห็นในกระทู้ที่ไม่เผยแพร่หายจากสาธารณะไปแล้ว ไม่นับ (ข้อบังคับ Phase 6b)
+    // ความคิดเห็นในกระทู้ที่ไม่เผยแพร่หายจากสาธารณะไปแล้ว ไม่นับ (ข้อบังคับ Phase 6b) — คิวตรวจก็ไม่แสดง
     db.communityComment.groupBy({ by: ["status"], where: { ...created, post: { status: "APPROVED" } }, ...COUNT }),
-    db.jobPosting.groupBy({ by: ["status"], where: created, ...COUNT }),
+    // ประกาศที่เจ้าของปิดรับระหว่างรอตรวจไม่อยู่ในคิว จึงไม่นับ — ตัวเลขรอตรวจต้องตรงกับคิวใน /admin (pendingQueue)
+    db.jobPosting.groupBy({ by: ["status"], where: { ...created, NOT: { status: "PENDING", isActive: false } }, ...COUNT }),
   ]);
 
   const top = topCompanySeries(companyGroups, TOP_N);
@@ -48,6 +50,7 @@ export async function dashboardData(range: DateRange) {
     totals: {
       reviews: avg._count,
       avgScore: avg._avg.scoreOverall === null ? null : round1(avg._avg.scoreOverall),
+      // เนื้อหา 4 ชนิดที่รอในคิว "รอตรวจ" — ไม่รวมคำขอยืนยันสิทธิ์และข้อร้องเรียน
       pending: approval.reduce((n, r) => n + r.PENDING, 0),
     },
     departments: departmentSeries(deptGroups, departmentLabel),

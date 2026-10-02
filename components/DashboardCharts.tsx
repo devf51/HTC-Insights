@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import type { ChartPalette } from "./DashboardChartsInner";
 
 // Recharts แตะ window — ssr: false ใช้ได้เฉพาะใน client component (CLAUDE.md)
-const loading = () => <div className="h-40 w-full rounded-md bg-surface-200" />;
+// data-chart-loading: ReportExport รอจนไม่มีตัวนี้เหลือก่อนจับภาพ
+const loading = () => <div data-chart-loading className="h-40 w-full rounded-md bg-surface-200" />;
 export const DepartmentChart = dynamic(() => import("./DashboardChartsInner").then((m) => m.DepartmentChart), { ssr: false, loading });
 export const DimensionChart = dynamic(() => import("./DashboardChartsInner").then((m) => m.DimensionChart), { ssr: false, loading });
 export const ApprovalChart = dynamic(() => import("./DashboardChartsInner").then((m) => m.ApprovalChart), { ssr: false, loading });

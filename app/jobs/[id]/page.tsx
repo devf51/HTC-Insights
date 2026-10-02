@@ -7,8 +7,7 @@ import { mapsUrl, telHref } from "@/lib/job-rules";
 import { getJob } from "@/lib/jobs";
 import { getCurrentUser } from "@/lib/session";
 import { idSchema } from "@/lib/validation";
-
-const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" });
+import { thaiDate } from "@/lib/thai-time";
 
 export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
   const id = idSchema.safeParse((await params).id);
@@ -64,7 +63,7 @@ export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
           </Card>
         </div>
       </div>
-      <p className="text-small text-ink-muted">{`ประกาศเมื่อ ${thaiDate(job.createdAt)}`}</p>
+      <p className="text-small text-ink-muted">{`ประกาศเมื่อ ${thaiDate(job.createdAt, "long")}`}</p>
       {user && user.role !== "ADMIN" && <ReportButton kind="job" id={job.id} />}
     </PageShell>
   );

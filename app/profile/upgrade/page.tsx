@@ -8,8 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { uploadsEnabled } from "@/lib/cloudinary";
 import { departmentLabel } from "@/lib/departments";
 import { myUpgradeRequests } from "@/lib/upgrades";
-
-const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
+import { thaiDate } from "@/lib/thai-time";
 
 export default async function UpgradePage() {
   const user = await requireUser();

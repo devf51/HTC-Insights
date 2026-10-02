@@ -74,7 +74,7 @@ export async function registerEmployer(input: EmployerInput): Promise<{ id: stri
   const user = await requireRole("EXTERNAL");
   const { address, lat, lng, ...employer } = input;
   try {
-    // สถานประกอบการกับที่ตั้งสร้างในคำสั่งเดียว — Company ยังไม่ isVerified จึงไม่ขึ้นหน้า /insights จนผู้ดูแลยืนยัน
+    // สถานประกอบการกับที่ตั้งสร้างในคำสั่งเดียว — Company ยังไม่ isVerified จึงไม่ขึ้นหน้า /insights จนผู้ดูแลยืนยัน (แท็บสถานประกอบการใน /admin)
     return await db.employer.create({
       data: {
         ...employer,

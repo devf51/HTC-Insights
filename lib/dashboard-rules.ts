@@ -1,10 +1,10 @@
 // ไฟล์นี้ต้อง pure — tests/dashboard-rules.test.mjs import ตรงด้วย Node ห้าม import ค่าจริงเพิ่ม (import type ได้)
+// import ไฟล์ pure อื่นได้ ต้องใส่นามสกุล .ts ให้ Node หาเจอ
 // แปลงผล groupBy/aggregate ของ lib/dashboard.ts เป็นซีรีส์ที่กราฟและตารางใช้
+import { round1 } from "./company-rules.ts";
+import { thaiDate } from "./thai-time.ts";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-/** ปัดทศนิยมหนึ่งตำแหน่ง — ตัวเลขบนกราฟ ตาราง และรายงานใช้ค่าเดียวกัน */
-export const round1 = (n: number) => Math.round(n * 10) / 10;
-const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
 
 export type DateRange = { gte: Date | null; lt: Date | null; label: string };
 

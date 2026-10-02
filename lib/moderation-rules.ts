@@ -85,6 +85,7 @@ const ACTIONS: Record<string, string> = {
   change_role: "เปลี่ยนบทบาท",
   ban_user: "ระงับบัญชี",
   unban_user: "ยกเลิกการระงับบัญชี",
+  verify_company: "ยืนยันสถานประกอบการ",
 };
 
 /** ชื่อการกระทำในประวัติผู้ดูแล — การกระทำที่รู้จัก หรือรูปแบบ <verb>_<kind> ที่ moderate() เขียน · อื่น ๆ คืนค่าเดิม */
@@ -142,4 +143,9 @@ export function reportNotice(kind: ReportKind, action: ReportAction, note: strin
         ? `${what}ได้รับการจัดการแล้ว: ${note}`
         : `${what}ตรวจแล้วไม่พบการละเมิดกฎ: ${note}`;
   return { type: `report_${action}`, message, link: null };
+}
+
+/** หลักการโดเมนข้อ 4 — ผู้ประกอบการรู้ว่าสถานประกอบการขึ้นหน้าค้นหาของนักศึกษาแล้ว */
+export function companyVerifiedNotice(name: string) {
+  return { type: "company_verified", message: `สถานประกอบการ "${excerpt(name)}" ได้รับการยืนยันจากวิทยาลัยแล้ว นักศึกษาค้นหาเจอแล้ว`, link: "/profile" };
 }

@@ -10,10 +10,9 @@ import { POST_TYPES, postTypeLabel, type PostType } from "@/lib/community-rules"
 import { DEPARTMENTS, departmentLabel } from "@/lib/departments";
 import { getCurrentUser } from "@/lib/session";
 import { communityListParamsSchema } from "@/lib/validation";
+import { thaiDate } from "@/lib/thai-time";
 
 type Filters = { type?: PostType; department?: string; page: number };
-
-const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
 
 export default async function CommunityPage({ searchParams }: PageProps<"/community">) {
   const f = communityListParamsSchema.parse(await searchParams);

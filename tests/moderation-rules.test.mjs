@@ -103,5 +103,6 @@ test("ชื่อเป้าหมายและการกระทำใ�
   assert.equal(actionLabel("change_role"), "เปลี่ยนบทบาท");
   assert.equal(actionLabel("withdraw_report"), "ถอนเนื้อหาตามข้อร้องเรียน");
   assert.equal(actionLabel("approve_upgrade"), "อนุมัติคำขอยืนยันสิทธิ์");
+  assert.equal(actionLabel("verify_company"), "ยืนยันสถานประกอบการ");
   assert.equal(actionLabel("constructor"), "constructor");
 });
