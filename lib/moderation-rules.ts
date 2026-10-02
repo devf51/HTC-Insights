@@ -76,9 +76,70 @@ export function decisionNotice(t: NoticeTarget, decision: Decision, reason: stri
 
 const VERBS: Record<string, string> = { approve: "อนุมัติ", reject: "ปฏิเสธ" };
 
-/** ชื่อการกระทำในประวัติผู้ดูแล — รูปแบบ <verb>_<kind> ที่ moderate() เขียน · รูปแบบอื่นคืนค่าเดิม */
+const ACTIONS: Record<string, string> = {
+  approve_upgrade: "อนุมัติคำขอยืนยันสิทธิ์",
+  reject_upgrade: "ปฏิเสธคำขอยืนยันสิทธิ์",
+  withdraw_report: "ถอนเนื้อหาตามข้อร้องเรียน",
+  resolve_report: "ปิดข้อร้องเรียน",
+  dismiss_report: "ยกข้อร้องเรียน",
+  change_role: "เปลี่ยนบทบาท",
+  ban_user: "ระงับบัญชี",
+  unban_user: "ยกเลิกการระงับบัญชี",
+};
+
+/** ชื่อการกระทำในประวัติผู้ดูแล — การกระทำที่รู้จัก หรือรูปแบบ <verb>_<kind> ที่ moderate() เขียน · อื่น ๆ คืนค่าเดิม */
 export function actionLabel(action: string): string {
+  if (Object.hasOwn(ACTIONS, action)) return ACTIONS[action];
   const [verb, kind, ...rest] = action.split("_");
   if (rest.length > 0 || !Object.hasOwn(VERBS, verb) || !CONTENT_KINDS.some((k) => k.value === kind)) return action;
   return VERBS[verb] + kindLabel(kind);
+}
+
+const TARGET_LABELS: Record<string, string> = { company: "สถานประกอบการ", upgrade: "คำขอยืนยันสิทธิ์", report: "ข้อร้องเรียน", user: "บัญชี" };
+
+/** ชื่อ targetType ในประวัติและข้อความ */
+export function targetLabel(type: string): string {
+  return Object.hasOwn(TARGET_LABELS, type) ? TARGET_LABELS[type] : kindLabel(type);
+}
+
+// ---------- ข้อร้องเรียน ----------
+
+export const REPORT_KINDS = [...CONTENT_KINDS, { value: "company", label: "สถานประกอบการ" }] as const;
+export type ReportKind = (typeof REPORT_KINDS)[number]["value"];
+export const REPORT_KIND_VALUES = REPORT_KINDS.map((k) => k.value) as [ReportKind, ...ReportKind[]];
+export type ReportColumn = "reviewId" | "postId" | "commentId" | "jobId" | "companyId";
+export const REPORT_COLUMN: Record<ReportKind, ReportColumn> = {
+  review: "reviewId",
+  post: "postId",
+  comment: "commentId",
+  job: "jobId",
+  company: "companyId",
+};
+
+/** แถว Report → เป้าหมาย — มีคอลัมน์เป้าหมายได้คอลัมน์เดียว */
+export function reportTarget(r: Record<ReportColumn, string | null>): { kind: ReportKind; id: string } | null {
+  for (const k of REPORT_KINDS) {
+    const id = r[REPORT_COLUMN[k.value]];
+    if (id) return { kind: k.value, id };
+  }
+  return null;
+}
+
+export type ReportAction = "withdraw" | "resolve" | "dismiss";
+
+/** สถานประกอบการไม่มีสถานะให้ถอน — ใช้ปิดเรื่องพร้อมบันทึกแทน */
+export function reportActionError(kind: ReportKind, action: ReportAction): string | null {
+  return action === "withdraw" && kind === "company" ? "สถานประกอบการถอนไม่ได้ ใช้ปิดเรื่องพร้อมบันทึกการจัดการแทน" : null;
+}
+
+/** หลักการโดเมนข้อ 4 — ผู้รายงานต้องรู้ผล */
+export function reportNotice(kind: ReportKind, action: ReportAction, note: string) {
+  const what = `รายงาน${targetLabel(kind)}ของคุณ`;
+  const message =
+    action === "withdraw"
+      ? `${what}ได้รับการตรวจแล้ว ผู้ดูแลถอนเนื้อหานั้นออก: ${note}`
+      : action === "resolve"
+        ? `${what}ได้รับการจัดการแล้ว: ${note}`
+        : `${what}ตรวจแล้วไม่พบการละเมิดกฎ: ${note}`;
+  return { type: `report_${action}`, message, link: null };
 }

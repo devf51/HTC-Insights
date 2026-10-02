@@ -33,6 +33,9 @@ const DAL = {
   "lib/jobs.ts": ["listJobs", "getJob"], // เมนูตำแหน่งงานเปิดให้ผู้ที่ยังไม่ล็อกอิน (navFor(null))
   "lib/moderation.ts": [],
   "lib/notifications.ts": [],
+  "lib/reports.ts": [],
+  "lib/upgrades.ts": [],
+  "lib/users.ts": [],
 };
 test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
   for (const [file, publicFns] of Object.entries(DAL)) {
@@ -79,12 +82,15 @@ test("ตำแหน่งงานที่สาธารณะเห็น�
   assert.doesNotMatch(src, /\buser: \{/);
 });
 
-test("การตัดสินของผู้ดูแลเขียนแจ้งเตือนและประวัติผ่าน helper กลางเท่านั้น", () => {
-  const files = ["lib/moderation.ts", ...readdirSync("app/api", { recursive: true }).map((f) => `app/api/${String(f).replaceAll("\\", "/")}`)];
-  const direct = files.filter((f) => f.endsWith(".ts") && /\.(notification|auditLog)\.create\(/.test(readFileSync(f, "utf8")));
+test("Notification และ AuditLog ถูกเขียนผ่าน lib/admin.ts เท่านั้น และการกระทำของผู้ดูแลอยู่ในทรานแซกชัน", () => {
+  const files = ["lib", "app"]
+    .flatMap((d) => readdirSync(d, { recursive: true }).map((f) => `${d}/${String(f).replaceAll("\\", "/")}`))
+    .filter((f) => /\.tsx?$/.test(f) && !f.startsWith("app/generated/") && f !== "lib/admin.ts");
+  const direct = files.filter((f) => /\.(notification|auditLog)\.(create|createMany|upsert)\(/.test(readFileSync(f, "utf8")));
   assert.deepEqual(direct, []);
-  const src = readFileSync("lib/moderation.ts", "utf8");
-  assert.match(src, /db\.\$transaction/);
-  assert.match(src, /await notify\(tx,/);
-  assert.match(src, /await logAdminAction\(tx,/);
+  for (const f of ["lib/moderation.ts", "lib/upgrades.ts", "lib/users.ts"]) {
+    const src = readFileSync(f, "utf8");
+    assert.match(src, /db\.\$transaction/, f);
+    assert.match(src, /await logAdminAction\(tx,/, f);
+  }
 });

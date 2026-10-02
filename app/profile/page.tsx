@@ -4,29 +4,18 @@ import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icon";
 import { JobActiveButton } from "@/components/JobActiveButton";
 import { PageShell } from "@/components/PageShell";
+import { StatusBadge } from "@/components/StatusBadge";
 import { Badge } from "@/components/ui/Badge";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { ROLE_LABELS } from "@/lib/account-rules";
 import { requireUser } from "@/lib/auth";
 import { myPosts } from "@/lib/community";
 import { postTypeLabel } from "@/lib/community-rules";
 import { departmentLabel } from "@/lib/departments";
 import { myEmployer } from "@/lib/jobs";
-import type { Role } from "@/lib/nav";
 import { myReviews } from "@/lib/reviews";
-
-const ROLE_LABEL: Record<Role, string> = {
-  STUDENT: "นักศึกษา",
-  EXTERNAL: "บุคคลภายนอก",
-  ADMIN: "ผู้ดูแลระบบ",
-};
-
-const STATUS = {
-  PENDING: { tone: "warning", label: "รอตรวจ" },
-  APPROVED: { tone: "success", label: "เผยแพร่แล้ว" },
-  REJECTED: { tone: "danger", label: "ไม่ผ่านการตรวจ" },
-} as const;
 
 const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
 
@@ -79,7 +68,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
         <span className="flex flex-wrap items-center gap-2">
           <span className="break-all">{user.email}</span>
           <Badge tone="signal">
-            {ROLE_LABEL[user.role]}
+            {ROLE_LABELS[user.role]}
             {user.isSuperAdmin ? " ระดับสูง" : ""}
           </Badge>
         </span>
@@ -100,7 +89,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
                   key={r.id}
                   eyebrow={thaiDate(r.createdAt)}
                   title={r.company.name}
-                  footer={<Badge tone={STATUS[r.status].tone}>{STATUS[r.status].label}</Badge>}
+                  footer={<StatusBadge status={r.status} />}
                 >
                   {r.status === "REJECTED" && (
                     <>
@@ -136,7 +125,7 @@ export default async function ProfilePage({ searchParams }: PageProps<"/profile"
                       </Link>
                     )
                   }
-                  footer={<Badge tone={STATUS[p.status].tone}>{STATUS[p.status].label}</Badge>}
+                  footer={<StatusBadge status={p.status} />}
                 >
                   {p.status === "REJECTED" && <p>{`เหตุผล: ${p.rejectionReason ?? "ไม่ระบุ"}`}</p>}
                 </Card>
@@ -197,7 +186,7 @@ function EmployerSection({ employer }: { employer: Awaited<ReturnType<typeof myE
               }
               footer={
                 <span className="flex flex-wrap items-center gap-3">
-                  <Badge tone={STATUS[j.status].tone}>{STATUS[j.status].label}</Badge>
+                  <StatusBadge status={j.status} />
                   {!j.isActive && <Badge>ปิดรับแล้ว</Badge>}
                   {j.status !== "REJECTED" && <JobActiveButton id={j.id} isActive={j.isActive} />}
                 </span>

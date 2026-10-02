@@ -4,6 +4,7 @@ import { CommentForm } from "@/components/CommentForm";
 import { EmptyState } from "@/components/EmptyState";
 import { LikeButton } from "@/components/LikeButton";
 import { PageShell } from "@/components/PageShell";
+import { ReportButton } from "@/components/ReportButton";
 import { Badge } from "@/components/ui/Badge";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getPost } from "@/lib/community";
@@ -47,7 +48,12 @@ export default async function PostPage({ params }: PageProps<"/community/[id]">)
         </Badge>
       )}
       <p className="max-w-prose whitespace-pre-line break-words">{post.body}</p>
-      {approved && <LikeButton target={{ postId: post.id }} liked={post.liked} count={post.likeCount} disabled={!canAct} />}
+      {approved && (
+        <div className="flex flex-wrap items-center gap-4">
+          <LikeButton target={{ postId: post.id }} liked={post.liked} count={post.likeCount} disabled={!canAct} />
+          {canAct && post.userId !== viewerId && <ReportButton kind="post" id={post.id} />}
+        </div>
+      )}
 
       <section className="flex flex-col gap-4">
         <SectionHeader title={`ความคิดเห็น (${countNodes(comments)})`} />
@@ -91,6 +97,7 @@ function CommentItem({ c, ctx }: { c: Node; ctx: Ctx }) {
           <div className="flex flex-wrap items-center gap-2">
             <LikeButton target={{ commentId: c.id }} liked={c.liked} count={c.likeCount} disabled={!ctx.canAct} />
             {ctx.canPickBest && c.userId !== ctx.viewerId && <BestAnswerButton postId={ctx.postId} commentId={c.id} isBest={isBest} />}
+            {ctx.canAct && c.userId !== ctx.viewerId && <ReportButton kind="comment" id={c.id} />}
           </div>
         )}
         {ctx.canAct && approved && (

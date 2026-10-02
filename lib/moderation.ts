@@ -7,15 +7,19 @@ import { UserError } from "./http";
 import {
   AUDIT_PER_PAGE,
   CASCADE_REASON,
+  REPORT_COLUMN,
   commentApproveError,
   commentSubtree,
   decisionNotice,
   excerpt,
+  reportActionError,
+  reportNotice,
+  reportTarget,
   type ContentKind,
   type Decision,
   type NoticeTarget,
 } from "./moderation-rules";
-import type { ModerationInput } from "./validation";
+import type { ModerationInput, ReportDecision } from "./validation";
 
 // ทุกฟังก์ชัน export async เริ่มด้วย requireAdmin — tests/route-guards.test.mjs ตรวจ
 // การตัดสินทุกครั้ง: เปลี่ยนสถานะ + notify ถึงทุกคนที่ได้รับผล + logAdminAction ในทรานแซกชันเดียว (หลักการโดเมนข้อ 3–4)
@@ -158,20 +162,23 @@ const decideJob: Decide = async (tx, id, decision, reason, check) => {
 
 const DECIDE: Record<ContentKind, Decide> = { review: decideReview, post: decidePost, comment: decideComment, job: decideJob };
 
-/** ตัดสินเนื้อหาหนึ่งชิ้น — ใช้ทั้งตรวจของที่รอ และถอนของที่เผยแพร่แล้ว (ปฏิเสธของที่ APPROVED) */
+/** ตัดสินในทรานแซกชันของผู้เรียก — moderate() และ resolveReport() ใช้ตัวเดียวกัน ไม่มีตรรกะถอนชุดที่สอง */
+async function applyDecision(tx: Tx, adminId: string, kind: ContentKind, id: string, input: ModerationInput) {
+  const reason = input.decision === "REJECTED" ? input.reason : null;
+  // ตัดสินได้เฉพาะเมื่อสถานะยังเป็นอย่างที่ผู้ดูแลเห็นตอนกด — ผู้ดูแลสองคนกดพร้อมกันหรือหน้าค้าง ไม่ตัดสินทับกัน
+  const check = (cur: Current) => {
+    if (cur.status !== input.from || cur.status === input.decision) throw new UserError(409, STALE);
+  };
+  const { affected, detail = reason } = await DECIDE[kind](tx, id, input.decision, reason, check);
+  for (const a of affected) await notify(tx, a.userId, decisionNotice(a.target, input.decision, a.reason ?? reason));
+  await logAdminAction(tx, adminId, `${input.decision === "APPROVED" ? "approve" : "reject"}_${kind}`, { type: kind, id }, detail);
+}
+
+/** ตัดสินเนื้อหาหนึ่งชิ้นจากคิวตรวจ — from ค่าเริ่มต้น PENDING */
 export async function moderate(kind: ContentKind, id: string, input: ModerationInput): Promise<{ status: Decision }> {
   const admin = await requireAdmin();
-  const reason = input.decision === "REJECTED" ? input.reason : null;
   try {
-    await db.$transaction(async (tx) => {
-      // ตัดสินได้เฉพาะเมื่อสถานะยังเป็นอย่างที่ผู้ดูแลเห็นตอนกด — ผู้ดูแลสองคนกดพร้อมกันหรือหน้าค้าง ไม่ตัดสินทับกัน
-      const check = (cur: Current) => {
-        if (cur.status !== input.from || cur.status === input.decision) throw new UserError(409, STALE);
-      };
-      const { affected, detail = reason } = await DECIDE[kind](tx, id, input.decision, reason, check);
-      for (const a of affected) await notify(tx, a.userId, decisionNotice(a.target, input.decision, a.reason ?? reason));
-      await logAdminAction(tx, admin.id, `${input.decision === "APPROVED" ? "approve" : "reject"}_${kind}`, { type: kind, id }, detail);
-    });
+    await db.$transaction((tx) => applyDecision(tx, admin.id, kind, id, input));
   } catch (e) {
     if (isPrismaError(e, "P2002")) throw new UserError(409, OPEN_TAKEN);
     throw e;
@@ -190,4 +197,66 @@ export async function auditLog(page: number) {
     select: { id: true, action: true, targetType: true, targetId: true, detail: true, createdAt: true, admin: WHO },
   });
   return { items, page: w.page, pageCount: w.pageCount };
+}
+
+// ---------- ข้อร้องเรียน ----------
+
+export async function pendingReports() {
+  await requireAdmin();
+  return db.report.findMany({
+    where: PENDING,
+    ...QUEUE,
+    select: {
+      id: true,
+      reason: true,
+      createdAt: true,
+      reporter: WHO,
+      reviewId: true,
+      postId: true,
+      commentId: true,
+      jobId: true,
+      companyId: true,
+      review: { select: { status: true, textWork: true, companyId: true, company: { select: { name: true } } } },
+      post: { select: { status: true, title: true } },
+      comment: { select: { status: true, body: true, postId: true } },
+      job: { select: { status: true, title: true } },
+      company: { select: { name: true } },
+    },
+  });
+}
+
+/** จัดการข้อร้องเรียน — ถอนเนื้อหาผ่าน applyDecision แล้วปิดทุกข้อร้องเรียนที่รอของเนื้อหาชิ้นนั้น · ทางอื่นปิดเฉพาะเรื่องนี้ */
+export async function resolveReport(id: string, input: ReportDecision): Promise<{ status: "RESOLVED" | "DISMISSED" }> {
+  const admin = await requireAdmin();
+  const status = input.action === "dismiss" ? "DISMISSED" : "RESOLVED";
+  try {
+    await db.$transaction(async (tx) => {
+      const r = await tx.report.findUnique({
+        where: { id },
+        select: { status: true, reporterId: true, reviewId: true, postId: true, commentId: true, jobId: true, companyId: true },
+      });
+      if (!r) throw new UserError(404, "ไม่พบข้อร้องเรียน");
+      if (r.status !== "PENDING") throw new UserError(409, "ข้อร้องเรียนนี้ถูกจัดการไปแล้ว รีเฟรชหน้าเพื่อดูสถานะล่าสุด");
+      const target = reportTarget(r);
+      if (!target) throw new UserError(404, "ไม่พบเนื้อหาที่ถูกรายงาน");
+      const err = reportActionError(target.kind, input.action);
+      if (err) throw new UserError(400, err);
+
+      let closing = [{ id, reporterId: r.reporterId }];
+      if (input.action === "withdraw" && target.kind !== "company") {
+        await applyDecision(tx, admin.id, target.kind, target.id, { decision: "REJECTED", from: "APPROVED", reason: input.note });
+        closing = await tx.report.findMany({
+          where: { status: "PENDING", [REPORT_COLUMN[target.kind]]: target.id } as Prisma.ReportWhereInput,
+          select: { id: true, reporterId: true },
+        });
+      }
+      await tx.report.updateMany({ where: { id: { in: closing.map((c) => c.id) } }, data: { status, resolution: input.note } });
+      for (const c of closing) await notify(tx, c.reporterId, reportNotice(target.kind, input.action, input.note));
+      await logAdminAction(tx, admin.id, `${input.action}_report`, { type: "report", id }, input.note);
+    });
+  } catch (e) {
+    if (isPrismaError(e, "P2002")) throw new UserError(409, OPEN_TAKEN);
+    throw e;
+  }
+  return { status };
 }

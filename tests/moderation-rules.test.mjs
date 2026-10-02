@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   AUDIT_PER_PAGE,
+  REPORT_KIND_VALUES,
   CASCADE_REASON,
   CONTENT_KIND_VALUES,
   actionLabel,
@@ -10,6 +11,10 @@ import {
   decisionNotice,
   excerpt,
   kindLabel,
+  reportActionError,
+  reportNotice,
+  reportTarget,
+  targetLabel,
 } from "../lib/moderation-rules.ts";
 
 test("ชนิดเนื้อหาที่ผ่านการคัดกรอง", () => {
@@ -70,4 +75,33 @@ test("actionLabel แปลงชื่อการกระทำในปร�
   assert.equal(actionLabel("approve_review"), "อนุมัติรีวิว");
   assert.equal(actionLabel("reject_comment"), "ปฏิเสธความคิดเห็น");
   assert.equal(actionLabel("toggle_ban_user"), "toggle_ban_user");
+});
+
+test("ข้อร้องเรียน: ชนิด เป้าหมาย และข้อห้าม", () => {
+  assert.deepEqual(REPORT_KIND_VALUES, ["review", "post", "comment", "job", "company"]);
+  const row = { reviewId: null, postId: null, commentId: "c1", jobId: null, companyId: null };
+  assert.deepEqual(reportTarget(row), { kind: "comment", id: "c1" });
+  assert.equal(reportTarget({ ...row, commentId: null }), null);
+  assert.ok(reportActionError("company", "withdraw"));
+  assert.equal(reportActionError("company", "resolve"), null);
+  assert.equal(reportActionError("review", "withdraw"), null);
+});
+
+test("ข้อความแจ้งผู้รายงาน", () => {
+  assert.deepEqual(reportNotice("review", "withdraw", "ข้อมูลเท็จ"), {
+    type: "report_withdraw",
+    message: "รายงานรีวิวของคุณได้รับการตรวจแล้ว ผู้ดูแลถอนเนื้อหานั้นออก: ข้อมูลเท็จ",
+    link: null,
+  });
+  assert.match(reportNotice("company", "resolve", "แก้ลิงก์แล้ว").message, /^รายงานสถานประกอบการของคุณได้รับการจัดการแล้ว/);
+  assert.match(reportNotice("post", "dismiss", "ไม่ผิดกฎ").message, /ไม่พบการละเมิดกฎ/);
+});
+
+test("ชื่อเป้าหมายและการกระทำในประวัติ", () => {
+  assert.equal(targetLabel("user"), "บัญชี");
+  assert.equal(targetLabel("comment"), "ความคิดเห็น");
+  assert.equal(actionLabel("change_role"), "เปลี่ยนบทบาท");
+  assert.equal(actionLabel("withdraw_report"), "ถอนเนื้อหาตามข้อร้องเรียน");
+  assert.equal(actionLabel("approve_upgrade"), "อนุมัติคำขอยืนยันสิทธิ์");
+  assert.equal(actionLabel("constructor"), "constructor");
 });

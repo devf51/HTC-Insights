@@ -25,7 +25,8 @@ const EXTERNAL_USERS = [1, 2].map((n) => ({
   role: "EXTERNAL" as const,
 }));
 
-const ADMIN_USER = { id: "seed_admin", email: "seed-admin@example.invalid", name: "ผู้ดูแลทดสอบ", role: "ADMIN" as const };
+const ADMIN_USER = { id: "seed_admin", email: "seed-admin@example.invalid", name: "ผู้ดูแลทดสอบ", role: "ADMIN" as const, isSuperAdmin: false };
+const SUPER_USER = { id: "seed_super", email: "seed-super@example.invalid", name: "ผู้ดูแลระดับสูงทดสอบ", role: "ADMIN" as const, isSuperAdmin: true };
 
 const COMPANIES = [
   { id: "seed_c1", name: "บริษัท หาดใหญ่ออโต้เซอร์วิส จำกัด", industry: "ซ่อมบำรุงรถยนต์", address: "ถ.เพชรเกษม อ.หาดใหญ่ จ.สงขลา", lat: 7.0067, lng: 100.471, phone: "074-000-001", website: "https://example.com", isVerified: true },
@@ -124,11 +125,30 @@ const JOB_COMMON = {
   contactPhone: EMPLOYER.phone,
 };
 
+const CARD_URL = "https://res.cloudinary.com/demo/image/upload/sample.jpg";
+const UPGRADES = [
+  { id: "seed_up2", userId: "seed_e2", studentId: "65201234567", department: IT, educationLevel: "ปวส.", cardImageUrl: CARD_URL, status: "REJECTED" as const, rejectionReason: "รูปบัตรไม่ชัด อ่านรหัสนักศึกษาไม่ได้", createdAt: new Date("2026-09-20T09:00:00+07:00") },
+  { id: "seed_up1", userId: "seed_e2", studentId: "65201234567", department: IT, educationLevel: "ปวส.", cardImageUrl: CARD_URL, status: "PENDING" as const, rejectionReason: null, createdAt: new Date("2026-10-01T09:00:00+07:00") },
+];
+
+type SeedReport = { id: string; reporterId: string; reason: string; status: "PENDING" | "DISMISSED"; resolution?: string; reviewId?: string; postId?: string; commentId?: string; companyId?: string };
+const REPORTS: SeedReport[] = [
+  { id: "seed_rp1", reporterId: "seed_u1", reviewId: "seed_r2", status: "PENDING", reason: "เบี้ยเลี้ยงในรีวิวไม่ตรงกับที่ได้จริง" },
+  { id: "seed_rp2", reporterId: "seed_u3", reviewId: "seed_r2", status: "PENDING", reason: "ข้อมูลรถรับส่งไม่ถูกต้อง" },
+  { id: "seed_rp3", reporterId: "seed_u2", commentId: "seed_cm6", status: "PENDING", reason: "ข้อมูลเอกสารไม่ครบ อาจทำให้รุ่นน้องเข้าใจผิด" },
+  { id: "seed_rp4", reporterId: "seed_u1", companyId: "seed_c2", status: "PENDING", reason: "เว็บไซต์ที่แสดงเป็นลิงก์อันตราย" },
+  { id: "seed_rp5", reporterId: "seed_u4", postId: "seed_post2", status: "DISMISSED", reason: "กระทู้โฆษณา", resolution: "ตรวจแล้วเป็นการเล่าประสบการณ์ ไม่ผิดกฎ" },
+];
+
 async function main() {
-  for (const u of [...USERS, ...EXTERNAL_USERS, ADMIN_USER]) await db.user.upsert({ where: { id: u.id }, create: u, update: u });
+  // คืนบทบาท การระงับ และข้อมูลนักศึกษาทุกรอบ — สคริปต์ทดสอบเปลี่ยนสิ่งเหล่านี้
+  for (const u of [...USERS, ...EXTERNAL_USERS, ADMIN_USER, SUPER_USER]) {
+    const data = { studentId: null, department: null, educationLevel: null, isSuperAdmin: false, ...u, isBanned: false };
+    await db.user.upsert({ where: { id: u.id }, create: data, update: data });
+  }
   // seed คืนสถานะเนื้อหาทุกรอบ — แจ้งเตือนและประวัติของบัญชีทดสอบจากรอบก่อนจะไม่ตรงกับความจริง จึงล้างด้วย
   await db.notification.deleteMany({ where: { userId: { startsWith: "seed_" } } });
-  await db.auditLog.deleteMany({ where: { adminId: ADMIN_USER.id } });
+  await db.auditLog.deleteMany({ where: { adminId: { in: [ADMIN_USER.id, SUPER_USER.id] } } });
   for (const c of COMPANIES) await db.company.upsert({ where: { id: c.id }, create: c, update: c });
   for (const { scores, allowance, text, ...r } of REVIEWS) {
     const [scoreWork, scoreEnv, scoreMentor, scoreWelfare] = scores;
@@ -175,12 +195,21 @@ async function main() {
     const data = { ...j, ...JOB_COMMON, rejectionReason: rejectionReason ?? null };
     await db.jobPosting.upsert({ where: { id: j.id }, create: data, update: data });
   }
+  // คำขอที่ถูกปฏิเสธมาก่อน — partial unique อนุญาต PENDING แค่หนึ่ง
+  for (const u of UPGRADES) await db.upgradeRequest.upsert({ where: { id: u.id }, create: u, update: u });
+  // ข้อร้องเรียนที่สคริปต์ทดสอบสร้างถูกลบก่อน ไม่งั้นชน unique รายงานซ้ำ
+  await db.report.deleteMany({ where: { reporterId: { startsWith: "seed_" }, id: { not: { startsWith: "seed_" } } } });
+  for (const { resolution, ...r } of REPORTS) {
+    const data = { reviewId: null, postId: null, commentId: null, jobId: null, companyId: null, ...r, resolution: resolution ?? null };
+    await db.report.upsert({ where: { id: r.id }, create: data, update: data });
+  }
 
   const byStatus = await db.review.groupBy({ by: ["status"], where: { id: { startsWith: "seed_" } }, _count: { _all: true } });
   console.log(`seed: ${COMPANIES.length} บริษัท`, byStatus.map((s) => `${s.status}=${s._count._all}`).join(" "));
   console.log(`seed: ${POSTS.length} กระทู้ ${COMMENTS.length} ความคิดเห็น ${LIKES.length} ถูกใจ`);
   const publicJobs = await db.jobPosting.count({ where: { id: { startsWith: "seed_j" }, status: "APPROVED", isActive: true } });
   console.log(`seed: 1 สถานประกอบการ ${JOBS.length} ประกาศ เปิดสาธารณะ=${publicJobs}`);
+  console.log(`seed: ${UPGRADES.length} คำขอยืนยันสิทธิ์ ${REPORTS.length} ข้อร้องเรียน`);
 }
 
 main().finally(() => db.$disconnect());

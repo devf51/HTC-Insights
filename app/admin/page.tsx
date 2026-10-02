@@ -2,16 +2,19 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { ModerationActions } from "@/components/ModerationActions";
+import { ReportActions } from "@/components/ReportActions";
 import { PageShell } from "@/components/PageShell";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { Table } from "@/components/ui/Table";
+import { ROLE_LABELS } from "@/lib/account-rules";
 import { postTypeLabel } from "@/lib/community-rules";
 import { departmentLabel } from "@/lib/departments";
-import { actionLabel, kindLabel } from "@/lib/moderation-rules";
-import { auditLog, pendingQueue } from "@/lib/moderation";
+import { actionLabel, excerpt, kindLabel, targetLabel, type ReportKind } from "@/lib/moderation-rules";
+import { auditLog, pendingQueue, pendingReports } from "@/lib/moderation";
+import { pendingUpgrades } from "@/lib/upgrades";
 import { adminParamsSchema } from "@/lib/validation";
 
 const thaiDateTime = (d: Date) =>
@@ -19,6 +22,8 @@ const thaiDateTime = (d: Date) =>
 
 const TABS = [
   { value: "pending", label: "รอตรวจ" },
+  { value: "upgrades", label: "คำขอยืนยันสิทธิ์" },
+  { value: "reports", label: "ข้อร้องเรียน" },
   { value: "history", label: "ประวัติผู้ดูแล" },
 ] as const;
 
@@ -48,7 +53,7 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           ))}
         </div>
       </nav>
-      {p.tab === "history" ? <History page={p.page} /> : <Pending />}
+      {p.tab === "history" ? <History page={p.page} /> : p.tab === "upgrades" ? <Upgrades /> : p.tab === "reports" ? <Reports /> : <Pending />}
     </PageShell>
   );
 }
@@ -92,7 +97,7 @@ async function Pending() {
             key={r.id}
             eyebrow={`${departmentLabel(r.department)} · ${thaiDateTime(r.createdAt)}`}
             title={r.company.name}
-            footer={<ModerationActions kind="review" id={r.id} />}
+            footer={<ModerationActions endpoint={`/api/admin/moderation/review/${r.id}`} />}
           >
             <Who user={r.user} anonymous={r.isAnonymous} />
             <p>{`คะแนนรวม ${r.scoreOverall.toFixed(1)} · ${r.dailyAllowance === null ? "ไม่ระบุเบี้ยเลี้ยง" : `เบี้ยเลี้ยง ${r.dailyAllowance} บาท/วัน`}`}</p>
@@ -118,7 +123,7 @@ async function Pending() {
             key={p.id}
             eyebrow={`${postTypeLabel(p.type)} · ${p.department ? departmentLabel(p.department) : "ทั่วไป"} · ${thaiDateTime(p.createdAt)}`}
             title={p.title}
-            footer={<ModerationActions kind="post" id={p.id} />}
+            footer={<ModerationActions endpoint={`/api/admin/moderation/post/${p.id}`} />}
           >
             <Who user={p.user} />
             <Text>{p.body}</Text>
@@ -127,7 +132,7 @@ async function Pending() {
       </Section>
       <Section title={kindLabel("comment")} count={q.comments.length}>
         {q.comments.map((c) => (
-          <Card key={c.id} eyebrow={thaiDateTime(c.createdAt)} title={`ในกระทู้: ${c.post.title}`} footer={<ModerationActions kind="comment" id={c.id} />}>
+          <Card key={c.id} eyebrow={thaiDateTime(c.createdAt)} title={`ในกระทู้: ${c.post.title}`} footer={<ModerationActions endpoint={`/api/admin/moderation/comment/${c.id}`} />}>
             <Who user={c.user} />
             {c.parent && <Text label="ตอบกลับ">{c.parent.body}</Text>}
             <Text>{c.body}</Text>
@@ -143,7 +148,7 @@ async function Pending() {
             key={j.id}
             eyebrow={`${departmentLabel(j.department)} · ${thaiDateTime(j.createdAt)}`}
             title={`${j.title} · ${j.company.name}`}
-            footer={<ModerationActions kind="job" id={j.id} />}
+            footer={<ModerationActions endpoint={`/api/admin/moderation/job/${j.id}`} />}
           >
             <Who user={j.employer.user} />
             <p>{`${j.allowance === null ? "ไม่ระบุเบี้ยเลี้ยง" : `เบี้ยเลี้ยง ${j.allowance} บาท/วัน`} · ติดต่อ ${j.contactEmail}${j.contactPhone ? ` ${j.contactPhone}` : ""}`}</p>
@@ -177,7 +182,7 @@ async function History({ page }: { page: number }) {
           at: <span className="whitespace-nowrap">{thaiDateTime(a.createdAt)}</span>,
           admin: a.admin.name ?? a.admin.email,
           action: actionLabel(a.action),
-          target: <span className="whitespace-nowrap">{`${kindLabel(a.targetType)} ${a.targetId}`}</span>,
+          target: <span className="whitespace-nowrap">{`${targetLabel(a.targetType)} ${a.targetId}`}</span>,
           detail: a.detail ?? "-",
         }))}
       />
@@ -201,5 +206,70 @@ async function History({ page }: { page: number }) {
         </nav>
       )}
     </>
+  );
+}
+
+async function Upgrades() {
+  const items = await pendingUpgrades();
+  if (items.length === 0) return <EmptyState icon="badge" title="ไม่มีคำขอรอตรวจ" />;
+  return (
+    <ul className="flex flex-col gap-4">
+      {items.map((u) => (
+        <li key={u.id}>
+          <Card eyebrow={thaiDateTime(u.createdAt)} title={`รหัสนักศึกษา ${u.studentId}`} footer={<ModerationActions endpoint={`/api/admin/upgrades/${u.id}`} />}>
+            <Who user={u.user} />
+            <p>{`${departmentLabel(u.department)} · ${u.educationLevel} · บทบาทปัจจุบัน ${ROLE_LABELS[u.user.role]}`}</p>
+            <a href={u.cardImageUrl} target="_blank" rel="noopener noreferrer" className="kn-link">
+              ดูรูปบัตรนักศึกษา
+            </a>
+          </Card>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+type PendingReport = Awaited<ReturnType<typeof pendingReports>>[number];
+
+/** เป้าหมายของข้อร้องเรียนสำหรับแสดง — status null = ไม่มีสถานะการตรวจ (สถานประกอบการ) */
+function reportPreview(r: PendingReport): { kind: ReportKind; title: string; href: string | null; status: string | null } {
+  if (r.review) return { kind: "review", title: `${r.review.company.name}: ${excerpt(r.review.textWork)}`, href: `/insights/${r.review.companyId}`, status: r.review.status };
+  if (r.post) return { kind: "post", title: r.post.title, href: `/community/${r.postId}`, status: r.post.status };
+  if (r.comment) return { kind: "comment", title: excerpt(r.comment.body), href: `/community/${r.comment.postId}`, status: r.comment.status };
+  if (r.job) return { kind: "job", title: r.job.title, href: `/jobs/${r.jobId}`, status: r.job.status };
+  return { kind: "company", title: r.company?.name ?? "ไม่พบเนื้อหา", href: r.companyId ? `/insights/${r.companyId}` : null, status: null };
+}
+
+async function Reports() {
+  const items = await pendingReports();
+  if (items.length === 0) return <EmptyState icon="flag" title="ไม่มีข้อร้องเรียนรอตรวจ" />;
+  return (
+    <ul className="flex flex-col gap-4">
+      {items.map((r) => {
+        const t = reportPreview(r);
+        return (
+          <li key={r.id}>
+            <Card
+              eyebrow={`${targetLabel(t.kind)} · ${thaiDateTime(r.createdAt)}`}
+              title={
+                t.href ? (
+                  <Link href={t.href} className="kn-link">
+                    {t.title}
+                  </Link>
+                ) : (
+                  t.title
+                )
+              }
+              footer={<ReportActions id={r.id} canWithdraw={t.kind !== "company" && t.status === "APPROVED"} />}
+            >
+              <p className="text-small text-ink-muted">ผู้รายงาน</p>
+              <Who user={r.reporter} />
+              <Text label="เหตุผล">{r.reason}</Text>
+              {t.status !== null && t.status !== "APPROVED" && <Badge tone="warning">เนื้อหานี้ไม่ได้เผยแพร่แล้ว</Badge>}
+            </Card>
+          </li>
+        );
+      })}
+    </ul>
   );
 }

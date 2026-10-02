@@ -126,7 +126,6 @@ model Employer {
   contactEmail String // อีเมลติดต่อที่แสดงในประกาศ คนละตัวกับอีเมลบัญชี
   phone        String?
   departments  Json // แผนกวิชาที่เปิดรับ เป็นอาร์เรย์ของรหัสแผนก — SQLite ไม่รองรับ String[]
-  isApproved   Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -351,6 +350,13 @@ model Report {
   job      JobPosting?       @relation(fields: [jobId], references: [id], onDelete: Cascade)
   company  Company?          @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
+  // เรื่องที่ยังรอตรวจต่อบัญชีต่อเนื้อหาได้เรื่องเดียว — ปิดแล้วรายงานใหม่ได้ (เนื้อหาอาจถูกแก้แล้วส่งกลับมา)
+  // SQLite ยอม NULL ซ้ำ คอลัมน์เป้าหมายที่ไม่ใช้จึงไม่ชนกัน
+  @@unique([reporterId, reviewId], map: "Report_pending_reviewId", where: raw("\"status\" = 'PENDING'"))
+  @@unique([reporterId, postId], map: "Report_pending_postId", where: raw("\"status\" = 'PENDING'"))
+  @@unique([reporterId, commentId], map: "Report_pending_commentId", where: raw("\"status\" = 'PENDING'"))
+  @@unique([reporterId, jobId], map: "Report_pending_jobId", where: raw("\"status\" = 'PENDING'"))
+  @@unique([reporterId, companyId], map: "Report_pending_companyId", where: raw("\"status\" = 'PENDING'"))
   @@index([status])
 }
 
@@ -364,7 +370,8 @@ model AuditLog {
   detail     String?
   createdAt  DateTime @default(now())
 
-  admin User @relation("AuditAdmin", fields: [adminId], references: [id], onDelete: Cascade)
+  // Restrict: ลบบัญชีผู้ดูแลต้องไม่ลบประวัติ (หลักการโดเมนข้อ 3)
+  admin User @relation("AuditAdmin", fields: [adminId], references: [id], onDelete: Restrict)
 
   @@index([createdAt])
   @@index([action])
@@ -386,5 +393,7 @@ model UpgradeRequest {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // คำขอที่รอตรวจได้ครั้งละหนึ่งต่อบัญชี — บังคับที่ฐานข้อมูล
+  @@unique([userId], map: "UpgradeRequest_one_pending", where: raw("\"status\" = 'PENDING'"))
   @@index([status])
 }

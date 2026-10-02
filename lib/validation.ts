@@ -2,7 +2,8 @@ import { z } from "zod";
 import { POST_TYPE_VALUES } from "./community-rules";
 import { DEPARTMENT_VALUES } from "./departments";
 import { departmentsError, pinError } from "./job-rules";
-import { CONTENT_KIND_VALUES } from "./moderation-rules";
+import { EDUCATION_LEVEL_VALUES, ROLE_VALUES } from "./account-rules";
+import { CONTENT_KIND_VALUES, REPORT_KIND_VALUES } from "./moderation-rules";
 import { parseThaiDate, periodError, workTimeError } from "./review-rules";
 
 // schema ของทุก input จากผู้ใช้ — ผ่านที่นี่ก่อนแตะฐานข้อมูล (CLAUDE.md)
@@ -258,6 +259,56 @@ export type ModerationInput = z.infer<typeof moderationInputSchema>;
 
 /** query string ของ /admin — ค่าผิดรูปแบบถูกเพิกเฉย */
 export const adminParamsSchema = z.object({
-  tab: z.enum(["pending", "history"]).catch("pending"),
+  tab: z.enum(["pending", "upgrades", "reports", "history"]).catch("pending"),
+  page: z.coerce.number().int().min(1).catch(1),
+});
+
+/** ข้อความจากคนถึงผู้ดูแลหรือจากผู้ดูแลถึงผู้ใช้ */
+const adminText = (missing: string) =>
+  z.string({ error: missing }).trim().min(5, "ข้อความอย่างน้อย 5 ตัวอักษร").max(500, "ข้อความไม่เกิน 500 ตัวอักษร");
+
+export const reportInputSchema = z.object({
+  kind: z.enum(REPORT_KIND_VALUES, { error: "ระบุสิ่งที่รายงาน" }),
+  id: idSchema,
+  reason: adminText("ระบุเหตุผลที่รายงาน"),
+});
+export type ReportInput = z.infer<typeof reportInputSchema>;
+
+/** ทุกทางต้องมีบันทึก — ผู้รายงานเห็นในแจ้งเตือน (ถอน: เจ้าของเนื้อหาเห็นเป็นเหตุผลด้วย) */
+export const reportDecisionSchema = z.object({
+  action: z.enum(["withdraw", "resolve", "dismiss"], { error: "เลือกการจัดการ" }),
+  note: adminText("เขียนบันทึกถึงผู้รายงาน"),
+});
+export type ReportDecision = z.infer<typeof reportDecisionSchema>;
+
+/** multipart ของ /api/upgrades — รูปบัตรตรวจแยกด้วย photoError */
+export const upgradeFieldsSchema = z.object({
+  studentId: z.string({ error: "กรอกรหัสนักศึกษา" }).trim().regex(/^\d{5,15}$/, "รหัสนักศึกษาเป็นตัวเลข 5–15 หลัก"),
+  department: z.enum(DEPARTMENT_VALUES, { error: "เลือกแผนกวิชา" }),
+  educationLevel: z.enum(EDUCATION_LEVEL_VALUES, { error: "เลือกระดับการศึกษา" }),
+});
+export type UpgradeFields = z.infer<typeof upgradeFieldsSchema>;
+
+export const upgradeDecisionSchema = z.discriminatedUnion(
+  "decision",
+  [z.object({ decision: z.literal("APPROVED") }), z.object({ decision: z.literal("REJECTED"), reason: adminText("ระบุเหตุผลที่ปฏิเสธ") })],
+  { error: "เลือกอนุมัติหรือปฏิเสธ" },
+);
+export type UpgradeDecision = z.infer<typeof upgradeDecisionSchema>;
+
+export const userChangeSchema = z.discriminatedUnion(
+  "action",
+  [
+    z.object({ action: z.literal("set_role"), role: z.enum(ROLE_VALUES, { error: "เลือกบทบาท" }) }),
+    z.object({ action: z.literal("ban") }),
+    z.object({ action: z.literal("unban") }),
+  ],
+  { error: "เลือกการเปลี่ยนแปลง" },
+);
+
+/** query string ของ /admin/users — ค่าผิดรูปแบบถูกเพิกเฉย */
+export const userSearchSchema = z.object({
+  q: z.string().trim().transform((s) => s.slice(0, 100)).catch(""),
+  role: z.enum(ROLE_VALUES).optional().catch(undefined),
   page: z.coerce.number().int().min(1).catch(1),
 });

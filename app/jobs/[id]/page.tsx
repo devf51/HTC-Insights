@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
 import { PageShell } from "@/components/PageShell";
+import { ReportButton } from "@/components/ReportButton";
 import { Card } from "@/components/ui/Card";
 import { departmentLabel } from "@/lib/departments";
 import { mapsUrl, telHref } from "@/lib/job-rules";
 import { getJob } from "@/lib/jobs";
+import { getCurrentUser } from "@/lib/session";
 import { idSchema } from "@/lib/validation";
 
 const thaiDate = (d: Date) => d.toLocaleDateString("th-TH", { day: "numeric", month: "long", year: "numeric", timeZone: "Asia/Bangkok" });
@@ -13,6 +15,7 @@ export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
   // ไม่พบ รอตรวจ ถูกปฏิเสธ ปิดรับ — 404 เหมือนกันหมด
   const job = id.success ? await getJob(id.data) : null;
   if (!job) notFound();
+  const user = await getCurrentUser();
   const maps = mapsUrl(job.company.lat, job.company.lng);
 
   return (
@@ -62,6 +65,7 @@ export default async function JobPage({ params }: PageProps<"/jobs/[id]">) {
         </div>
       </div>
       <p className="text-small text-ink-muted">{`ประกาศเมื่อ ${thaiDate(job.createdAt)}`}</p>
+      {user && user.role !== "ADMIN" && <ReportButton kind="job" id={job.id} />}
     </PageShell>
   );
 }

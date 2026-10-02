@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CompanyMap } from "@/components/CompanyMap";
 import { EmptyState } from "@/components/EmptyState";
 import { PageShell } from "@/components/PageShell";
+import { ReportButton } from "@/components/ReportButton";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -47,6 +48,7 @@ export default async function CompanyPage({ params }: PageProps<"/insights/[id]"
           ยืนยันโดยวิทยาลัยแล้ว
         </Badge>
       )}
+      <ReportButton kind="company" id={c.id} />
 
       <div className="grid gap-6 md:grid-cols-3">
         <Card eyebrow="คะแนนรวม" metric={stats.avgScore?.toFixed(1) ?? "–"}>
@@ -154,6 +156,7 @@ function ReviewCard({ r }: { r: CompanyDetail["reviews"][number] }) {
           ))}
         </div>
       )}
+      <ReportButton kind="review" id={r.id} />
     </Card>
   );
 }

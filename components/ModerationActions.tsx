@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Icon } from "@/components/Icon";
 import { Button } from "@/components/ui/Button";
-import type { ContentKind } from "@/lib/moderation-rules";
 
 /** อนุมัติ หรือปฏิเสธพร้อมเหตุผลที่ผู้เขียนจะเห็น — เซิร์ฟเวอร์ตรวจเหตุผลซ้ำ (5–500 ตัวอักษร) */
-export function ModerationActions({ kind, id }: { kind: ContentKind; id: string }) {
+export function ModerationActions({ endpoint }: { endpoint: string }) {
+  const fieldId = useId();
   const router = useRouter();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
@@ -18,7 +18,7 @@ export function ModerationActions({ kind, id }: { kind: ContentKind; id: string 
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch(`/api/admin/moderation/${kind}/${id}`, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(body),
@@ -36,11 +36,11 @@ export function ModerationActions({ kind, id }: { kind: ContentKind; id: string 
       {rejecting ? (
         <>
           <div className="kn-field">
-            <label className="kn-field-label" htmlFor={`reason-${id}`}>
+            <label className="kn-field-label" htmlFor={fieldId}>
               เหตุผลที่ปฏิเสธ (ผู้เขียนจะเห็นข้อความนี้)
             </label>
             <textarea
-              id={`reason-${id}`}
+              id={fieldId}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={3}
