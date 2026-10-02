@@ -21,6 +21,10 @@
   --success: #3f6e1c;
   --warning: #8a5a00;
   --danger: #b3261e;
+  /* กราฟ: reference palette ของ skill dataviz ช่อง 1–3 (ตรวจด้วย validate_palette --pairs all แล้ว) */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
   --focus: var(--signal);
   --link: var(--signal);
   --scrim: rgba(22, 24, 28, 0.4);
@@ -55,6 +59,9 @@
   --success: #9ccc6b;
   --warning: #e0a63a;
   --danger: #f07a72;
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
   /* ประกาศซ้ำ: var() ถูกคำนวณตรงที่ประกาศ ถ้าไม่ซ้ำ Band จะได้ focus สีของ Paper */
   --focus: var(--signal);
   --link: var(--signal);
@@ -149,4 +156,43 @@ html .material-symbols-outlined.icon-fill {
   fill-opacity: 0.9;
   stroke: var(--surface-100);
   stroke-width: 2;
+}
+
+/* รายงาน A4 (/admin/dashboard/report) — แผ่นละ 794×1123px = A4 ที่ 96dpi พิมพ์แผ่นละหน้า ซ่อนเมนูและท้ายเว็บ */
+/* named page — ขอบกระดาษ 0 เฉพาะแผ่นรายงาน หน้าอื่นพิมพ์ตามปกติ */
+@page report {
+  size: A4;
+  margin: 0;
+}
+[data-report-sheet] {
+  page: report;
+}
+@media print {
+  body:has([data-report]) > :not(main) {
+    display: none !important;
+  }
+  body:has([data-report]) {
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+  [data-report] .no-print {
+    display: none !important;
+  }
+  /* แผ่นต้องชิดขอบกระดาษ: ล้างระยะห่างและกล่องเลื่อนที่ใช้บนจอ */
+  [data-report],
+  [data-report] > div,
+  [data-report] > div > div {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    width: auto !important;
+  }
+  [data-report-sheet] {
+    break-after: page;
+    box-shadow: none !important;
+    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+  }
 }

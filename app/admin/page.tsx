@@ -15,6 +15,7 @@ import { departmentLabel } from "@/lib/departments";
 import { actionLabel, excerpt, kindLabel, targetLabel, type ReportKind } from "@/lib/moderation-rules";
 import { auditLog, pendingQueue, pendingReports } from "@/lib/moderation";
 import { pendingUpgrades } from "@/lib/upgrades";
+import { requireAdmin } from "@/lib/auth";
 import { adminParamsSchema } from "@/lib/validation";
 
 const thaiDateTime = (d: Date) =>
@@ -28,6 +29,8 @@ const TABS = [
 ] as const;
 
 export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
+  // layout เรียกแล้ว — getCurrentUser ห่อ cache() ไม่ query ซ้ำ · แดชบอร์ดผู้บริหารเฉพาะ super admin
+  const admin = await requireAdmin();
   const p = adminParamsSchema.parse(await searchParams);
   return (
     <PageShell
@@ -38,9 +41,11 @@ export default async function AdminPage({ searchParams }: PageProps<"/admin">) {
           <Link href="/admin/users" className={buttonClass("secondary")}>
             จัดการบัญชี
           </Link>
-          <Link href="/admin/dashboard" className={buttonClass("secondary")}>
-            แดชบอร์ด
-          </Link>
+          {admin.isSuperAdmin && (
+            <Link href="/admin/dashboard" className={buttonClass("secondary")}>
+              แดชบอร์ด
+            </Link>
+          )}
         </>
       }
     >

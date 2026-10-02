@@ -3,6 +3,14 @@
 
 export type Scores = { scoreWork: number; scoreEnv: number; scoreMentor: number; scoreWelfare: number };
 
+/** ป้าย 4 ด้านที่ใช้ทั้งหน้าสถานประกอบการและแดชบอร์ด */
+export const SCORE_DIMENSIONS = [
+  ["scoreWork", "ลักษณะงาน"],
+  ["scoreEnv", "สภาพแวดล้อม"],
+  ["scoreMentor", "พี่เลี้ยง"],
+  ["scoreWelfare", "เบี้ยเลี้ยงและสวัสดิการ"],
+] as const;
+
 /** คะแนนรวม = ค่าเฉลี่ย 4 ด้าน ระบบคำนวณเอง ผู้ใช้ส่งมาเองไม่ได้ */
 export function overallScore(s: Scores): number {
   return (s.scoreWork + s.scoreEnv + s.scoreMentor + s.scoreWelfare) / 4;

@@ -12,14 +12,8 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { getCompany, type CompanyDetail } from "@/lib/companies";
 import { safeUrl } from "@/lib/company-rules";
 import { departmentLabel } from "@/lib/departments";
+import { SCORE_DIMENSIONS } from "@/lib/review-rules";
 import { companyIdSchema } from "@/lib/validation";
-
-const DIMENSIONS = [
-  ["scoreWork", "ลักษณะงาน"],
-  ["scoreEnv", "สภาพแวดล้อม"],
-  ["scoreMentor", "พี่เลี้ยง"],
-  ["scoreWelfare", "เบี้ยเลี้ยงและสวัสดิการ"],
-] as const;
 
 // เวลาไทยทั้งระบบ (บทเรียน v1) — th-TH แสดงปี พ.ศ.
 const monthYear = (d: Date) => d.toLocaleDateString("th-TH", { month: "short", year: "numeric", timeZone: "Asia/Bangkok" });
@@ -92,7 +86,7 @@ export default async function CompanyPage({ params }: PageProps<"/insights/[id]"
         <section className="flex flex-col gap-4">
           <SectionHeader title="คะแนนรายด้าน" />
           <dl className="grid max-w-xl gap-3">
-            {DIMENSIONS.map(([key, label]) => {
+            {SCORE_DIMENSIONS.map(([key, label]) => {
               const v = stats.dims[key];
               return (
                 <div key={key} className="grid grid-cols-[7.5rem_1fr_2.5rem] items-center gap-3 text-small">

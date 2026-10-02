@@ -61,6 +61,18 @@ const REVIEWS: SeedReview[] = [
   { id: "seed_r8", companyId: "seed_c6", userId: "seed_u4", department: "แผนกวิชาช่างอิเล็กทรอนิกส์", status: "APPROVED", scores: [2, 2, 3, 1], allowance: 150, text: "งานซ้ำ ๆ ไม่ค่อยได้เรียนรู้" },
 ];
 
+// วันที่สร้างกระจายหลายเดือน — ใช้ตรวจตัวกรองช่วงวันที่ของแดชบอร์ด
+const REVIEW_CREATED: Record<string, string> = {
+  seed_r1: "2026-06-20",
+  seed_r2: "2026-07-15",
+  seed_r3: "2026-07-20",
+  seed_r4: "2026-09-25",
+  seed_r5: "2026-08-05",
+  seed_r6: "2026-09-10",
+  seed_r7: "2026-08-25",
+  seed_r8: "2026-09-15",
+};
+
 type SeedPost = { id: string; userId: string; type: PostType; department: string | null; status: ContentStatus; title: string; body: string };
 
 const POSTS: SeedPost[] = [
@@ -168,6 +180,7 @@ async function main() {
       scoreOverall: (scoreWork + scoreEnv + scoreMentor + scoreWelfare) / 4,
       dailyAllowance: allowance,
       textWork: text,
+      createdAt: new Date(`${REVIEW_CREATED[r.id]}T10:00:00+07:00`),
     };
     await db.review.upsert({ where: { id: r.id }, create: data, update: data });
   }

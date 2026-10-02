@@ -36,6 +36,7 @@ const DAL = {
   "lib/reports.ts": [],
   "lib/upgrades.ts": [],
   "lib/users.ts": [],
+  "lib/dashboard.ts": [],
 };
 test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
   for (const [file, publicFns] of Object.entries(DAL)) {
@@ -92,5 +93,16 @@ test("Notification และ AuditLog ถูกเขียนผ่าน lib/a
     const src = readFileSync(f, "utf8");
     assert.match(src, /db\.\$transaction/, f);
     assert.match(src, /await logAdminAction\(tx,/, f);
+  }
+});
+
+test("แดชบอร์ดเฉพาะ super admin และตัวเลขเนื้อหาสาธารณะกรอง APPROVED", () => {
+  const src = readFileSync("lib/dashboard.ts", "utf8");
+  assert.match(src, /^ {2}await requireSuperAdmin\(\);/m);
+  assert.match(src, /const approvedReviews = \{ \.\.\.created, status: "APPROVED" \} as const/);
+  // ความคิดเห็นนับเฉพาะในกระทู้ที่เผยแพร่ (ข้อบังคับ Phase 6b)
+  assert.match(src, /post: \{ status: "APPROVED" \}/);
+  for (const f of ["app/admin/dashboard/page.tsx", "app/admin/dashboard/report/page.tsx"]) {
+    assert.match(existsSync(f) ? readFileSync(f, "utf8") : "", /await requireSuperAdmin\(\)/, f);
   }
 });

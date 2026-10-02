@@ -15,6 +15,7 @@ const INNER = [
   "/employer/jobs/new",
   "/jobs/[id]",
   "/notifications",
+  "/admin/dashboard/report",
   "/profile/upgrade",
   "/admin/users",
   "/admin/dashboard",

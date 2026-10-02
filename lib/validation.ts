@@ -312,3 +312,12 @@ export const userSearchSchema = z.object({
   role: z.enum(ROLE_VALUES).optional().catch(undefined),
   page: z.coerce.number().int().min(1).catch(1),
 });
+
+/** query string ของ /admin/dashboard — วันที่ผิดรูปแบบถูกเพิกเฉย (= ไม่จำกัดด้านนั้น) */
+const dashboardDate = z
+  .string()
+  .optional()
+  .transform((s) => (s ? parseThaiDate(s) : null))
+  .catch(null);
+
+export const dashboardParamsSchema = z.object({ from: dashboardDate, to: dashboardDate });
