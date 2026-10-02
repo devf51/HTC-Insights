@@ -25,6 +25,8 @@ const EXTERNAL_USERS = [1, 2].map((n) => ({
   role: "EXTERNAL" as const,
 }));
 
+const ADMIN_USER = { id: "seed_admin", email: "seed-admin@example.invalid", name: "ผู้ดูแลทดสอบ", role: "ADMIN" as const };
+
 const COMPANIES = [
   { id: "seed_c1", name: "บริษัท หาดใหญ่ออโต้เซอร์วิส จำกัด", industry: "ซ่อมบำรุงรถยนต์", address: "ถ.เพชรเกษม อ.หาดใหญ่ จ.สงขลา", lat: 7.0067, lng: 100.471, phone: "074-000-001", website: "https://example.com", isVerified: true },
   { id: "seed_c2", name: "บริษัท สงขลาไอทีโซลูชั่น จำกัด", industry: "เทคโนโลยีสารสนเทศ", address: "ถ.นิพัทธ์อุทิศ 3 อ.หาดใหญ่", lat: 7.0089, lng: 100.4745, phone: null, website: "javascript:alert(1)", isVerified: false },
@@ -123,7 +125,10 @@ const JOB_COMMON = {
 };
 
 async function main() {
-  for (const u of [...USERS, ...EXTERNAL_USERS]) await db.user.upsert({ where: { id: u.id }, create: u, update: u });
+  for (const u of [...USERS, ...EXTERNAL_USERS, ADMIN_USER]) await db.user.upsert({ where: { id: u.id }, create: u, update: u });
+  // seed คืนสถานะเนื้อหาทุกรอบ — แจ้งเตือนและประวัติของบัญชีทดสอบจากรอบก่อนจะไม่ตรงกับความจริง จึงล้างด้วย
+  await db.notification.deleteMany({ where: { userId: { startsWith: "seed_" } } });
+  await db.auditLog.deleteMany({ where: { adminId: ADMIN_USER.id } });
   for (const c of COMPANIES) await db.company.upsert({ where: { id: c.id }, create: c, update: c });
   for (const { scores, allowance, text, ...r } of REVIEWS) {
     const [scoreWork, scoreEnv, scoreMentor, scoreWelfare] = scores;

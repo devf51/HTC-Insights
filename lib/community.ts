@@ -109,7 +109,8 @@ export async function toggleLike(input: LikeInput): Promise<{ liked: boolean; co
   const target =
     "postId" in input
       ? await db.communityPost.findUnique({ where: { id: input.postId }, select: { status: true } })
-      : await db.communityComment.findUnique({ where: { id: input.commentId }, select: { status: true } });
+      : // ความคิดเห็นในกระทู้ที่ถูกถอนต้องกดถูกใจไม่ได้เหมือนตัวกระทู้
+        await db.communityComment.findUnique({ where: { id: input.commentId, post: APPROVED }, select: { status: true } });
   if (!target || target.status !== "APPROVED") throw new UserError(404, "ไม่พบเนื้อหานี้");
 
   const key = "postId" in input ? { postId: input.postId } : { commentId: input.commentId };

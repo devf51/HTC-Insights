@@ -8,9 +8,10 @@ import { cx } from "@/lib/cx";
 import { SETTINGS, isActive, type NavAction, type NavItem } from "@/lib/nav";
 
 /** แถบบน 64px — ต่ำกว่า 768px ซ่อนลิงก์ (kernel.css) เหลือชื่อแบรนด์ ไอคอนตั้งค่า และปุ่ม */
-export function TopNav({ links, action }: { links: NavItem[]; action: NavAction | null }) {
+export function TopNav({ links, action, unread }: { links: NavItem[]; action: NavAction | null; unread: number | null }) {
   const pathname = usePathname();
   const onSettings = isActive(pathname, SETTINGS.href);
+  const onBell = isActive(pathname, "/notifications");
   return (
     <header className="sticky top-0 z-40">
       <nav className="kn-nav" aria-label="เมนูหลัก">
@@ -25,6 +26,25 @@ export function TopNav({ links, action }: { links: NavItem[]; action: NavAction 
           ))}
         </div>
         <div className="ml-auto flex items-center gap-2">
+          {unread !== null && (
+            <Link
+              href="/notifications"
+              aria-label={unread > 0 ? `แจ้งเตือน ยังไม่อ่าน ${unread} รายการ` : "แจ้งเตือน"}
+              title="แจ้งเตือน"
+              aria-current={onBell ? "page" : undefined}
+              className={buttonClass("ghost", "sm", cx("relative w-8 px-0", onBell ? "text-signal" : "text-ink-muted"))}
+            >
+              <Icon name="notifications" filled={onBell} />
+              {unread > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="absolute -right-1 -top-1 min-w-4 rounded-full bg-signal px-1 text-center text-[11px] leading-4 text-surface-000"
+                >
+                  {unread > 9 ? "9+" : unread}
+                </span>
+              )}
+            </Link>
+          )}
           <Link
             href={SETTINGS.href}
             aria-label={SETTINGS.label}

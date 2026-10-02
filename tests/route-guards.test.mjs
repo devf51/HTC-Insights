@@ -31,6 +31,8 @@ const DAL = {
   "lib/reviews.ts": [],
   "lib/community.ts": [],
   "lib/jobs.ts": ["listJobs", "getJob"], // เมนูตำแหน่งงานเปิดให้ผู้ที่ยังไม่ล็อกอิน (navFor(null))
+  "lib/moderation.ts": [],
+  "lib/notifications.ts": [],
 };
 test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
   for (const [file, publicFns] of Object.entries(DAL)) {
@@ -75,4 +77,14 @@ test("ตำแหน่งงานที่สาธารณะเห็น�
   // อีเมลที่แสดงคือ contactEmail เท่านั้น — user.email ห้ามออกจากไฟล์นี้
   assert.doesNotMatch(src, /\bemail: true/);
   assert.doesNotMatch(src, /\buser: \{/);
+});
+
+test("การตัดสินของผู้ดูแลเขียนแจ้งเตือนและประวัติผ่าน helper กลางเท่านั้น", () => {
+  const files = ["lib/moderation.ts", ...readdirSync("app/api", { recursive: true }).map((f) => `app/api/${String(f).replaceAll("\\", "/")}`)];
+  const direct = files.filter((f) => f.endsWith(".ts") && /\.(notification|auditLog)\.create\(/.test(readFileSync(f, "utf8")));
+  assert.deepEqual(direct, []);
+  const src = readFileSync("lib/moderation.ts", "utf8");
+  assert.match(src, /db\.\$transaction/);
+  assert.match(src, /await notify\(tx,/);
+  assert.match(src, /await logAdminAction\(tx,/);
 });

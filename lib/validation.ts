@@ -2,6 +2,7 @@ import { z } from "zod";
 import { POST_TYPE_VALUES } from "./community-rules";
 import { DEPARTMENT_VALUES } from "./departments";
 import { departmentsError, pinError } from "./job-rules";
+import { CONTENT_KIND_VALUES } from "./moderation-rules";
 import { parseThaiDate, periodError, workTimeError } from "./review-rules";
 
 // schema ของทุก input จากผู้ใช้ — ผ่านที่นี่ก่อนแตะฐานข้อมูล (CLAUDE.md)
@@ -225,3 +226,38 @@ export const jobInputSchema = z.object({
 export type JobInput = z.infer<typeof jobInputSchema>;
 
 export const jobActiveInputSchema = z.object({ isActive: z.boolean({ error: "ระบุสถานะประกาศ" }) });
+
+// ---------- ผู้ดูแล ----------
+
+export const contentKindSchema = z.enum(CONTENT_KIND_VALUES);
+
+/**
+ * from: สถานะที่ผู้ดูแลเห็นตอนกด — ไม่ตรงกับในฐานข้อมูล = มีคนตัดสินไปก่อนแล้ว ได้ 409 แทนการตัดสินทับ
+ * ค่าเริ่มต้น PENDING (คิวรอตรวจ) · ถอนของที่เผยแพร่แล้วต้องส่ง from: "APPROVED" เอง
+ */
+const moderationFrom = z.enum(["PENDING", "APPROVED"], { error: "สถานะต้นทางไม่ถูกต้อง" }).default("PENDING");
+
+/** ปฏิเสธต้องบอกเหตุผล — ผู้เขียนเห็นข้อความนี้ในแจ้งเตือน (หลักการโดเมนข้อ 4) */
+export const moderationInputSchema = z.discriminatedUnion(
+  "decision",
+  [
+    z.object({ decision: z.literal("APPROVED"), from: moderationFrom }),
+    z.object({
+      decision: z.literal("REJECTED"),
+      from: moderationFrom,
+      reason: z
+        .string({ error: "ระบุเหตุผลที่ปฏิเสธ" })
+        .trim()
+        .min(5, "เหตุผลอย่างน้อย 5 ตัวอักษร")
+        .max(500, "เหตุผลไม่เกิน 500 ตัวอักษร"),
+    }),
+  ],
+  { error: "เลือกอนุมัติหรือปฏิเสธ" },
+);
+export type ModerationInput = z.infer<typeof moderationInputSchema>;
+
+/** query string ของ /admin — ค่าผิดรูปแบบถูกเพิกเฉย */
+export const adminParamsSchema = z.object({
+  tab: z.enum(["pending", "history"]).catch("pending"),
+  page: z.coerce.number().int().min(1).catch(1),
+});

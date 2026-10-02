@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { ThemeScript } from "@/components/ThemeScript";
 import { TopNav } from "@/components/TopNav";
 import { actionFor, navFor } from "@/lib/nav";
+import { unreadCount } from "@/lib/notifications";
 import { getCurrentUser } from "@/lib/session";
 
 const plexSans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-plex-sans" });
@@ -29,6 +30,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getCurrentUser();
   const role = user?.role ?? null;
   const links = navFor(role);
+  // ไม่ล็อกอิน = ไม่มีกระดิ่ง · unreadCount มี guard เองจึงเรียกเฉพาะเมื่อมีผู้ใช้
+  const unread = user ? await unreadCount() : null;
 
   return (
     <html lang="th" className={fontVars} suppressHydrationWarning>
@@ -44,7 +47,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       {/* pb บนมือถือ = ความสูง BottomNav + safe-area ให้ footer ไม่ถูกบัง */}
       <body className="flex min-h-dvh flex-col pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0">
-        <TopNav links={links} action={actionFor(role)} />
+        <TopNav links={links} action={actionFor(role)} unread={unread} />
         <main className="flex-1">{children}</main>
         <Footer />
         <BottomNav links={links} />
