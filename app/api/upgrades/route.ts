@@ -1,11 +1,13 @@
 import { requireRole } from "@/lib/auth";
-import { badRequest, userErrorResponse } from "@/lib/http";
+import { badRequest, crossSiteError, userErrorResponse } from "@/lib/http";
 import { submitUpgrade } from "@/lib/upgrades";
 import { upgradeFieldsSchema } from "@/lib/validation";
 
 /** ยื่นคำขอยืนยันสิทธิ์นักศึกษา — multipart: studentId department educationLevel + card */
 export async function POST(req: Request) {
   await requireRole("EXTERNAL");
+  const blocked = crossSiteError(req);
+  if (blocked) return blocked;
   const fd = await req.formData().catch(() => null);
   if (!fd) return badRequest("รูปแบบข้อมูลไม่ถูกต้อง");
   const fields = upgradeFieldsSchema.safeParse(Object.fromEntries([...fd].filter(([, v]) => typeof v === "string")));

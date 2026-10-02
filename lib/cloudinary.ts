@@ -18,7 +18,13 @@ export async function uploadImage(file: File, folder: string): Promise<string> {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
-        { folder, resource_type: "image", transformation: [{ width: 1600, height: 1600, crop: "limit", quality: "auto" }] },
+        {
+          folder,
+          resource_type: "image",
+          // ตรวจจากเนื้อไฟล์จริงที่ Cloudinary — photoError ดูแค่ MIME ที่ client บอก ส่ง SVG แอบอ้างเป็น PNG ได้ (OWASP A08)
+          allowed_formats: ["jpg", "png", "webp"],
+          transformation: [{ width: 1600, height: 1600, crop: "limit", quality: "auto" }],
+        },
         (err, res) => (err || !res ? reject(err ?? new Error("Cloudinary upload failed")) : resolve(res.secure_url)),
       )
       .end(bytes);

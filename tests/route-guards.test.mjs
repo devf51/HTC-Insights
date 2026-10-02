@@ -63,6 +63,17 @@ test("ทุก Route Handler ใน app/api (ยกเว้น auth ของ 
   }
 });
 
+test("ทุก Route Handler ที่เขียนข้อมูลตรวจต้นทางกัน CSRF (crossSiteError ผ่าน parseJson/readReviewForm หรือเรียกตรง)", () => {
+  const files = readdirSync("app/api", { recursive: true })
+    .map((f) => `app/api/${String(f).replaceAll("\\", "/")}`)
+    .filter((f) => f.endsWith("/route.ts") && !f.startsWith("app/api/auth/"));
+  const unchecked = files.filter((f) => {
+    const src = readFileSync(f, "utf8");
+    return /^export async function (?:POST|PUT|PATCH|DELETE)\b/m.test(src) && !/\b(?:parseJson|readReviewForm|crossSiteError)\(/.test(src);
+  });
+  assert.deepEqual(unchecked, []);
+});
+
 test("ตัวนับและ query ความคิดเห็นของบอร์ดกรอง APPROVED — บั๊ก v1 ที่พลาดซ้ำสองรอบ", () => {
   const src = readFileSync("lib/community.ts", "utf8");
   // _count ของความคิดเห็นบนการ์ดต้องนับเฉพาะที่อนุมัติ
