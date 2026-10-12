@@ -37,6 +37,7 @@ const DAL = {
   "lib/upgrades.ts": [],
   "lib/users.ts": [],
   "lib/dashboard.ts": [],
+  "lib/home.ts": [],
 };
 test("ทุกฟังก์ชันใน data access layer เรียก guard เอง — layout ไม่ re-render ตอนเปลี่ยนหน้า", () => {
   for (const [file, publicFns] of Object.entries(DAL)) {
