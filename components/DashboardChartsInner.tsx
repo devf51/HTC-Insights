@@ -6,7 +6,7 @@ import { Bar, BarChart, CartesianGrid, LabelList, Legend, ResponsiveContainer, T
 // palette มาจากผู้เรียก: หน้าจอใช้ CSS variable ตามธีม · รายงานใช้ hex ล้วน (html2canvas อ่าน oklch ไม่ออก)
 
 export type ChartPalette = { series: [string, string, string]; ink: string; muted: string; grid: string; surface: string };
-// row: ความสูงต่อแถวของแท่งแนวนอน — รายงาน A4 ใช้ค่าต่ำกว่าเพื่อให้ 18 แผนก / 10 บริษัทพอดีแผ่น
+// row: ความสูงต่อแถวของแท่งแนวนอน — รายงาน A4 ใช้ค่าต่ำกว่าเพื่อให้ 20 แผนก / 10 บริษัทพอดีแผ่น
 type Props<T> = { data: T[]; palette: ChartPalette; animate: boolean; row?: number };
 
 // ป้ายแกนยาวสุดที่รองรับ: "เครื่องทำความเย็นและปรับอากาศ" ≈ 179px ที่ 13px — เผื่อฟอนต์ตอนจับภาพกว้างกว่าที่วัด

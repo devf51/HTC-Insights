@@ -12,8 +12,8 @@ import { thaiDateTime } from "@/lib/thai-time";
 // แผ่นรายงานใช้สี hex ผ่าน style เท่านั้น — class สีของ Tailwind เป็น oklch ซึ่ง html2canvas อ่านไม่ออก (CLAUDE.md)
 const C = { ink: "#15181b", muted: "#565b60", line: "#d9dbd5", paper: "#ffffff", head: "#0f6b52" };
 const PAGES = 3;
-// แถวกราฟแนวนอนในรายงาน — 18 แผนกและ 10 บริษัทต้องพอดีแผ่น 1123px (ตรวจด้วยข้อมูลกรณีเลวร้ายที่สุดแล้ว)
-const ROW = 26;
+// แถวกราฟแนวนอนในรายงาน — 20 แผนกและ 10 บริษัทต้องพอดีแผ่น 1123px (ตรวจด้วยข้อมูลกรณีเลวร้ายที่สุดแล้ว)
+const ROW = 23;
 const SHEET: CSSProperties = { width: 794, height: 1123, padding: 48, background: C.paper, color: C.ink, boxSizing: "border-box", overflow: "hidden" };
 export default async function ReportPage({ searchParams }: PageProps<"/admin/dashboard/report">) {
   await requireSuperAdmin();
