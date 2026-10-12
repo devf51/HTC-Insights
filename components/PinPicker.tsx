@@ -14,7 +14,7 @@ function ClickToPin({ onPick }: { onPick: (p: Pin) => void }) {
   return null;
 }
 
-/** แตะบนแผนที่เพื่อปักหมุด — โหลดผ่าน dynamic ssr:false ใน EmployerForm เท่านั้น (Leaflet แตะ window) */
+/** แตะบนแผนที่เพื่อปักหมุด — โหลดผ่าน dynamic ssr:false ใน PinField เท่านั้น (Leaflet แตะ window) */
 export default function PinPicker({ pin, onPick }: { pin: Pin | null; onPick: (p: Pin) => void }) {
   return (
     <MapContainer center={HAT_YAI} zoom={12} scrollWheelZoom={false} className="h-full w-full">

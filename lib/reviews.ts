@@ -31,7 +31,7 @@ async function companyTarget(choice: CompanyChoice): Promise<CompanyTarget> {
     if (!c) throw new UserError(404, "ไม่พบสถานประกอบการ");
     return c;
   }
-  if (choice.companyKind === "new") return { create: { name: choice.newName, address: choice.newAddress } };
+  if (choice.companyKind === "new") return { create: { name: choice.newName, address: choice.newAddress, lat: choice.newLat, lng: choice.newLng } };
   const place = await findPlace(choice.placeQuery, choice.placeId);
   if (!place) throw new UserError(400, "ไม่พบสถานที่ที่เลือก ค้นหาแล้วเลือกใหม่อีกครั้ง");
   const { placeId, ...rest } = place;

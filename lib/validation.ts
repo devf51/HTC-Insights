@@ -96,6 +96,8 @@ export const reviewFieldsSchema = z
   });
 export type ReviewFields = z.infer<typeof reviewFieldsSchema>;
 
+const formCoord = z.preprocess((v) => (v === "" || v === undefined ? null : Number(v)), z.number({ error: "พิกัดไม่ถูกต้อง" }).nullable());
+
 /** รีวิวใหม่ต้องบอกว่ารีวิวบริษัทไหน — เลือกจากในระบบ จาก Google หรือกรอกเอง */
 export const companyChoiceSchema = z.discriminatedUnion(
   "companyKind",
@@ -110,10 +112,18 @@ export const companyChoiceSchema = z.discriminatedUnion(
       companyKind: z.literal("new"),
       newName: z.string({ error: "กรอกชื่อสถานประกอบการ" }).trim().min(2, "กรอกชื่อสถานประกอบการ").max(150, "ชื่อยาวเกิน 150 ตัวอักษร"),
       newAddress: z.string({ error: "กรอกที่อยู่" }).trim().min(5, "กรอกที่อยู่ให้รุ่นน้องหาเจอ").max(300, "ที่อยู่ยาวเกิน 300 ตัวอักษร"),
+      // multipart ส่งเป็นสตริง ช่องว่าง = ยังไม่ปักหมุด
+      newLat: formCoord,
+      newLng: formCoord,
     }),
   ],
   { error: "เลือกสถานประกอบการ" },
-);
+).superRefine((v, ctx) => {
+  if (v.companyKind !== "new") return;
+  // บังคับปักหมุด — ไม่มีพิกัดไม่ขึ้นแผนที่ /insights
+  const p = v.newLat === null || v.newLng === null ? "ปักหมุดที่ตั้งสถานประกอบการบนแผนที่" : pinError(v.newLat, v.newLng);
+  if (p) ctx.addIssue({ code: "custom", path: ["newLat"], message: p });
+});
 export type CompanyChoice = z.infer<typeof companyChoiceSchema>;
 
 /** query string ของ /insights/write-review — ค่าผิดรูปแบบถูกเพิกเฉย */

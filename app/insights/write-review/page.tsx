@@ -75,7 +75,7 @@ export default async function WriteReviewPage({ searchParams }: PageProps<"/insi
 
   if (p.new) {
     return (
-      <PageShell eyebrow="เขียนรีวิว" title="เพิ่มสถานประกอบการใหม่" lede="กรอกชื่อและที่อยู่ ผู้ดูแลจะตรวจพร้อมรีวิวของคุณ">
+      <PageShell eyebrow="เขียนรีวิว" title="เพิ่มสถานประกอบการใหม่" lede="กรอกชื่อ ที่อยู่ และปักหมุดที่ตั้ง ผู้ดูแลจะตรวจพร้อมรีวิวของคุณ">
         <ReviewForm company={{ kind: "new" }} />
       </PageShell>
     );

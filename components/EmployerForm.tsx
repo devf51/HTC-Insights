@@ -1,20 +1,13 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Icon } from "@/components/Icon";
+import { PinField } from "@/components/PinField";
 import type { Pin } from "@/components/PinPicker";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { DEPARTMENTS } from "@/lib/departments";
 import { MAX_DEPARTMENTS } from "@/lib/job-rules";
-
-// Leaflet แตะ window ตอน import — ssr: false ใช้ได้เฉพาะใน client component
-const PinPicker = dynamic(() => import("./PinPicker"), {
-  ssr: false,
-  loading: () => <div className="h-full w-full bg-surface-200" />,
-});
 
 export function EmployerForm() {
   const router = useRouter();
@@ -64,25 +57,12 @@ export function EmployerForm() {
     <form onSubmit={submit} className="flex max-w-2xl flex-col gap-6">
       <TextField name="companyName" label="ชื่อสถานประกอบการ" required minLength={2} maxLength={150} />
       <TextField name="address" label="ที่อยู่" required minLength={5} maxLength={300} />
-      <div className="kn-field">
-        <span className="kn-field-label">ปักหมุดที่ตั้ง (ไม่บังคับ)</span>
-        {/* isolate: z-index ของ Leaflet ต้องอยู่ใต้ TopNav/BottomNav */}
-        <div className="isolate h-64 overflow-hidden rounded-lg border border-line">
-          <PinPicker pin={pin} onPick={setPin} />
-        </div>
-        <p className="kn-field-hint">
-          {pin
-            ? `ปักหมุดแล้วที่ ${pin.lat.toFixed(5)}, ${pin.lng.toFixed(5)} แตะจุดอื่นเพื่อย้าย`
-            : "แตะบนแผนที่ตรงที่ตั้งสถานประกอบการ นักศึกษาจะเปิดเส้นทางจากหมุดนี้ได้"}
-        </p>
-        {pin && (
-          <div>
-            <Button size="sm" variant="ghost" icon={<Icon name="close" />} onClick={() => setPin(null)}>
-              ลบหมุด
-            </Button>
-          </div>
-        )}
-      </div>
+      <PinField
+        label="ปักหมุดที่ตั้ง (ไม่บังคับ)"
+        hint="แตะบนแผนที่ตรงที่ตั้งสถานประกอบการ นักศึกษาจะเปิดเส้นทางจากหมุดนี้ได้"
+        pin={pin}
+        onPick={setPin}
+      />
       <TextField
         name="contactEmail"
         type="email"

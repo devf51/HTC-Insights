@@ -2,6 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
+import { PinField } from "@/components/PinField";
+import type { Pin } from "@/components/PinPicker";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { DEPARTMENTS } from "@/lib/departments";
@@ -75,6 +77,10 @@ export function ReviewForm({
   });
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  // บริษัทใหม่ต้องปักหมุด ไม่งั้นไม่ขึ้นแผนที่ /insights — ช่องซ่อนตรวจด้วย reportValidity ไม่ได้ จึงเช็คเอง
+  const [pin, setPin] = useState<Pin | null>(null);
+  const needsPin = company.kind === "new" && !pin;
+  const NO_PIN = "ปักหมุดที่ตั้งสถานประกอบการบนแผนที่ก่อน";
   const last = STEPS.length - 1;
 
   const fieldsOf = (i: number) =>
@@ -83,6 +89,7 @@ export function ReviewForm({
   function next() {
     // every หยุดที่ช่องแรกที่ผิด — เบราว์เซอร์แสดงข้อความของมันที่ช่องนั้น
     if (fieldsOf(step).every((f) => f.reportValidity())) {
+      if (step === 0 && needsPin) return setError(NO_PIN);
       setError(null);
       setStep(step + 1);
     }
@@ -97,6 +104,11 @@ export function ReviewForm({
     if (bad !== -1) {
       setStep(bad);
       setError(`กรอกขั้นที่ ${bad + 1} (${STEPS[bad]}) ให้ครบก่อนส่ง`);
+      return;
+    }
+    if (needsPin) {
+      setStep(0);
+      setError(NO_PIN);
       return;
     }
     setSending(true);
@@ -135,7 +147,13 @@ export function ReviewForm({
           <input type="hidden" name="placeQuery" value={company.query} />
         </>
       )}
-      {company.kind === "new" && <input type="hidden" name="companyKind" value="new" />}
+      {company.kind === "new" && (
+        <>
+          <input type="hidden" name="companyKind" value="new" />
+          <input type="hidden" name="newLat" value={pin?.lat ?? ""} />
+          <input type="hidden" name="newLng" value={pin?.lng ?? ""} />
+        </>
+      )}
 
       <p className="text-small text-ink-muted" aria-live="polite">
         {`ขั้นที่ ${step + 1} จาก ${STEPS.length} · ${STEPS[step]}`}
@@ -146,6 +164,7 @@ export function ReviewForm({
           <>
             <TextField name="newName" label="ชื่อสถานประกอบการ" required minLength={2} maxLength={150} />
             <TextField name="newAddress" label="ที่อยู่" required minLength={5} maxLength={300} hint="ถนน อำเภอ จังหวัด ให้รุ่นน้องหาเจอ" />
+            <PinField label="ปักหมุดที่ตั้ง" hint="แตะบนแผนที่ตรงที่ตั้งสถานประกอบการ ให้รุ่นน้องเห็นบนแผนที่" pin={pin} onPick={setPin} />
           </>
         )}
         <Select name="department" label="แผนกวิชา" required defaultValue={defaults.department ?? ""}>
