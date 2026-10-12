@@ -1,26 +1,24 @@
 import type { Prisma } from "@/app/generated/prisma/client";
 import { requireRole, requireUser } from "./auth";
-import { uploadImage, uploadsEnabled } from "./cloudinary";
 import { db, isPrismaError } from "./db";
 import { UserError } from "./http";
 import { findPlace } from "./places";
 import { canEditReview, overallScore, photoError } from "./review-rules";
+import { saveImage } from "./uploads";
 import type { CompanyChoice, ReviewFields } from "./validation";
 
 // ทุกฟังก์ชัน export async เริ่มด้วย guard เอง (เหตุผลเดียวกับ lib/companies.ts) — tests/route-guards.test.mjs ตรวจ
 // รีวิวที่ส่งใหม่และที่แก้แล้วเป็น PENDING เสมอ — หลักการโดเมนข้อ 1
 
 const ALREADY_REVIEWED = "คุณรีวิวสถานประกอบการนี้แล้ว ดูสถานะได้ที่หน้าโปรไฟล์";
-const PHOTO_FOLDER = "htc-insights/reviews";
 
 function checkPhotos(photos: File[]) {
-  if (photos.length > 0 && !uploadsEnabled()) throw new UserError(400, "ระบบยังไม่เปิดให้แนบรูป");
   const err = photoError(photos);
   if (err) throw new UserError(400, err);
 }
 
-// ponytail: อัปโหลดก่อนเขียนฐานข้อมูล ถ้าทรานแซกชันล้ม รูปจะค้างใน Cloudinary — เก็บกวาดเมื่อพบว่าเกิดบ่อย
-const uploadAll = (photos: File[]) => Promise.all(photos.map((p) => uploadImage(p, PHOTO_FOLDER)));
+// ponytail: บันทึกรูปก่อนเขียนฐานข้อมูล ถ้าทรานแซกชันล้ม รูปจะค้างในโฟลเดอร์ uploads — เก็บกวาดเมื่อพบว่าเกิดบ่อย
+const uploadAll = (photos: File[]) => Promise.all(photos.map((p) => saveImage(p, "reviews")));
 
 const reviewData = (f: ReviewFields) => ({ ...f, scoreOverall: overallScore(f) });
 

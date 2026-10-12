@@ -1,16 +1,15 @@
 import { upgradeNotice } from "./account-rules";
 import { logAdminAction, notify } from "./admin";
 import { requireAdmin, requireRole, requireUser } from "./auth";
-import { uploadImage, uploadsEnabled } from "./cloudinary";
 import { db, isPrismaError } from "./db";
 import { UserError } from "./http";
 import { photoError } from "./review-rules";
+import { saveImage } from "./uploads";
 import type { AdminDecision, UpgradeFields } from "./validation";
 
 // คำขอยืนยันสิทธิ์นักศึกษา (สเปกข้อ 11) — ยื่นได้เฉพาะบุคคลภายนอก ที่รอตรวจได้ครั้งละหนึ่ง (UpgradeRequest_one_pending)
-// ponytail: รูปบัตรอัปโหลดเป็นรูปสาธารณะของ Cloudinary (URL เดาไม่ได้) แสดงเฉพาะผู้ดูแล — ถ้าต้องปิดจริงใช้ type "authenticated" + signed URL
+// รูปบัตรเก็บบนดิสก์ เปิดได้เฉพาะผู้ดูแลผ่าน app/api/files/cards/
 
-const CARD_FOLDER = "htc-insights/student-cards";
 const PENDING_EXISTS = "คุณมีคำขอที่รอตรวจอยู่แล้ว ติดตามสถานะได้ที่หน้านี้";
 
 /** คำขอทุกสถานะของผู้ใช้เอง — ให้ติดตามผล */
@@ -25,7 +24,6 @@ export async function myUpgradeRequests() {
 
 export async function submitUpgrade(fields: UpgradeFields, card: File | null): Promise<{ id: string }> {
   const user = await requireRole("EXTERNAL");
-  if (!uploadsEnabled()) throw new UserError(400, "ระบบยังไม่เปิดรับคำขอยืนยันสิทธิ์ ติดต่อผู้ดูแล");
   if (!card) throw new UserError(400, "แนบรูปบัตรนักศึกษา");
   const err = photoError([card]);
   if (err) throw new UserError(400, err);
@@ -33,7 +31,7 @@ export async function submitUpgrade(fields: UpgradeFields, card: File | null): P
   if (await db.upgradeRequest.findFirst({ where: { userId: user.id, status: "PENDING" }, select: { id: true } })) {
     throw new UserError(409, PENDING_EXISTS);
   }
-  const cardImageUrl = await uploadImage(card, CARD_FOLDER);
+  const cardImageUrl = await saveImage(card, "cards");
   try {
     return await db.upgradeRequest.create({ data: { ...fields, userId: user.id, cardImageUrl }, select: { id: true } });
   } catch (e) {

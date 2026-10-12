@@ -3,7 +3,10 @@
 // สร้าง PrismaClient เองเพราะ jiti (ตัวรัน .ts ที่มากับ prisma) ไม่รู้จัก alias @/ ที่ lib/db.ts ใช้
 // โค้ดแอปยังใช้ db จาก lib/db.ts เท่านั้น
 import "dotenv/config";
+import { mkdir, writeFile } from "node:fs/promises";
+import path from "node:path";
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import sharp from "sharp";
 import { PrismaClient, type ContentStatus, type PostType } from "../app/generated/prisma/client";
 
 if (process.env.NODE_ENV === "production") throw new Error("ห้าม seed ข้อมูลตัวอย่างบนเซิร์ฟเวอร์จริง");
@@ -137,7 +140,19 @@ const JOB_COMMON = {
   contactPhone: EMPLOYER.phone,
 };
 
-const CARD_URL = "https://res.cloudinary.com/demo/image/upload/sample.jpg";
+// รูปตัวอย่างเขียนลงโฟลเดอร์อัปโหลดเดียวกับแอป (lib/uploads.ts) — ชื่อไฟล์คงที่ตามรูปแบบ UUID ที่ route อ่านกลับ
+const SEED_FILES = { cards: "00000000-0000-4000-8000-000000000001.webp", reviews: "00000000-0000-4000-8000-000000000002.webp" };
+const CARD_URL = `/api/files/cards/${SEED_FILES.cards}`;
+const PHOTO_URL = `/api/files/reviews/${SEED_FILES.reviews}`;
+
+async function writeSeedImages() {
+  for (const [kind, name] of Object.entries(SEED_FILES)) {
+    const dir = path.resolve(process.env.UPLOAD_DIR || "uploads", kind);
+    await mkdir(dir, { recursive: true });
+    const img = sharp({ create: { width: 1200, height: 900, channels: 3, background: kind === "cards" ? "#5a80b8" : "#0f6b52" } });
+    await writeFile(path.join(dir, name), await img.webp().toBuffer());
+  }
+}
 const UPGRADES = [
   { id: "seed_up2", userId: "seed_e2", studentId: "65201234567", department: IT, educationLevel: "ปวส.", cardImageUrl: CARD_URL, status: "REJECTED" as const, rejectionReason: "รูปบัตรไม่ชัด อ่านรหัสนักศึกษาไม่ได้", createdAt: new Date("2026-09-20T09:00:00+07:00") },
   { id: "seed_up1", userId: "seed_e2", studentId: "65201234567", department: IT, educationLevel: "ปวส.", cardImageUrl: CARD_URL, status: "PENDING" as const, rejectionReason: null, createdAt: new Date("2026-10-01T09:00:00+07:00") },
@@ -184,11 +199,11 @@ async function main() {
     };
     await db.review.upsert({ where: { id: r.id }, create: data, update: data });
   }
-  // รูปตัวอย่างสาธารณะของ Cloudinary (บัญชี demo) — ใช้ตรวจการแสดงผลรูปโดยไม่ต้องมีคีย์
+  await writeSeedImages();
   await db.reviewPhoto.upsert({
     where: { id: "seed_p1" },
-    create: { id: "seed_p1", reviewId: "seed_r2", url: "https://res.cloudinary.com/demo/image/upload/sample.jpg" },
-    update: {},
+    create: { id: "seed_p1", reviewId: "seed_r2", url: PHOTO_URL },
+    update: { url: PHOTO_URL },
   });
   // bestAnswerId ล้างทุกรอบ (สคริปต์ทดสอบเปลี่ยนค่าได้) แล้วตั้งของ seed_post1 หลังความคิดเห็นถูกสร้าง
   for (const p of POSTS) {

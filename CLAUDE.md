@@ -32,7 +32,7 @@ Prisma Client ใช้ผ่าน `db` จาก `lib/db.ts` เท่าน�
 **การกระทำของผู้ดูแลเขียน `AuditLog` ในทรานแซกชันเดียวกัน** ผ่าน helper `logAdminAction()`
 และการอนุมัติ/ปฏิเสธเรียก `notify()` เสมอ อย่าเขียนตรรกะนี้ซ้ำในแต่ละ route
 
-**ความลับอยู่ใน env เท่านั้น** ห้าม `NEXT_PUBLIC_` กับ `SERPAPI_KEY`, คีย์ Cloudinary
+**ความลับอยู่ใน env เท่านั้น** ห้าม `NEXT_PUBLIC_` กับ `SERPAPI_KEY`
 หรืออะไรก็ตามที่เป็นความลับ เรียกบริการภายนอกจากฝั่งเซิร์ฟเวอร์เสมอ
 
 ## สไตล์โค้ด
@@ -57,6 +57,7 @@ Prisma Client ใช้ผ่าน `db` จาก `lib/db.ts` เท่าน�
 - **SQLite:** `prisma migrate` และแอปใช้ `DATABASE_URL` ตัวเดียวกัน (`file:./prisma/dev.db` นับจาก
   root) ไม่มี `String[]` ใช้ `Json` แทน, enum ไม่ถูกบังคับที่ฐานข้อมูล ต้อง validate ด้วย zod ก่อนเขียน,
   ไม่มี `mode: "insensitive"` ในการค้นหา, การเขียนล็อกทั้งไฟล์ — บนเซิร์ฟเวอร์ต้องสำรองไฟล์ `.db` เอง
+  พร้อมโฟลเดอร์รูปที่อัปโหลด (`UPLOAD_DIR`)
 - หลังแก้ schema รัน `npx prisma generate` ด้วย — Prisma 7 `migrate dev` ไม่ generate client ให้
 - npm ในเครื่องนี้บล็อก install script ถ้าลงแพ็กเกจที่ต้องใช้ postinstall ให้รัน
   `npm approve-scripts <pkg>`

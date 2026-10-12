@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { TextField } from "@/components/ui/TextField";
 import { requireRole } from "@/lib/auth";
-import { uploadsEnabled } from "@/lib/cloudinary";
 import { listCompanies } from "@/lib/companies";
 import { findPlace, placesEnabled, searchPlaces } from "@/lib/places";
 import { toThaiDateInput } from "@/lib/review-rules";
@@ -20,14 +19,13 @@ export default async function WriteReviewPage({ searchParams }: PageProps<"/insi
   // layout ยอม ADMIN ด้วย แต่การเขียนรีวิวเป็นของนักศึกษาเท่านั้น
   await requireRole("STUDENT");
   const p = writeReviewParamsSchema.parse(await searchParams);
-  const uploads = uploadsEnabled();
 
   if (p.edit) {
     const r = await getReviewForEdit(p.edit);
     if (!r) notFound();
     return (
       <PageShell eyebrow="แก้ไขรีวิวที่ไม่ผ่านการตรวจ" title={r.company.name} lede={`เหตุผลจากผู้ดูแล: ${r.rejectionReason ?? "ไม่ระบุ"}`}>
-        <ReviewForm company={{ kind: "existing", id: r.company.id }} editId={p.edit} defaults={toDefaults(r)} uploadsEnabled={uploads} />
+        <ReviewForm company={{ kind: "existing", id: r.company.id }} editId={p.edit} defaults={toDefaults(r)} />
       </PageShell>
     );
   }
@@ -55,7 +53,7 @@ export default async function WriteReviewPage({ searchParams }: PageProps<"/insi
     }
     return (
       <PageShell eyebrow="เขียนรีวิว" title={company.name} lede={company.address ?? undefined}>
-        <ReviewForm company={{ kind: "existing", id: company.id }} uploadsEnabled={uploads} />
+        <ReviewForm company={{ kind: "existing", id: company.id }} />
       </PageShell>
     );
   }
@@ -68,7 +66,7 @@ export default async function WriteReviewPage({ searchParams }: PageProps<"/insi
     if (place) {
       return (
         <PageShell eyebrow="เขียนรีวิว" title={place.name} lede={place.address ?? undefined}>
-          <ReviewForm company={{ kind: "place", placeId: place.placeId, query: p.q }} uploadsEnabled={uploads} />
+          <ReviewForm company={{ kind: "place", placeId: place.placeId, query: p.q }} />
         </PageShell>
       );
     }
@@ -78,7 +76,7 @@ export default async function WriteReviewPage({ searchParams }: PageProps<"/insi
   if (p.new) {
     return (
       <PageShell eyebrow="เขียนรีวิว" title="เพิ่มสถานประกอบการใหม่" lede="กรอกชื่อและที่อยู่ ผู้ดูแลจะตรวจพร้อมรีวิวของคุณ">
-        <ReviewForm company={{ kind: "new" }} uploadsEnabled={uploads} />
+        <ReviewForm company={{ kind: "new" }} />
       </PageShell>
     );
   }

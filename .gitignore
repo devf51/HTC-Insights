@@ -62,3 +62,6 @@ next-env.d.ts
 /app/generated
 
 /app/generated/prisma
+
+# รูปที่ผู้ใช้อัปโหลด (lib/uploads.ts) — ข้อมูลจริง ไม่เข้า git
+/uploads

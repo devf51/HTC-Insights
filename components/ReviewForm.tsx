@@ -59,12 +59,10 @@ export function ReviewForm({
   company,
   editId,
   defaults = {},
-  uploadsEnabled,
 }: {
   company: CompanyPick;
   editId?: string;
   defaults?: Partial<ReviewDefaults>;
-  uploadsEnabled: boolean;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -240,26 +238,24 @@ export function ReviewForm({
       </Step>
 
       <Step i={4} step={step}>
-        {uploadsEnabled && (
-          <div className="kn-field">
-            <label className="kn-field-label" htmlFor="photos">
-              {`รูปประกอบ (ไม่เกิน ${MAX_PHOTOS} รูป ไฟล์ละไม่เกิน 5 MB)`}
-            </label>
-            <input
-              id="photos"
-              name="photos"
-              type="file"
-              multiple
-              accept={PHOTO_TYPES.join(",")}
-              className="kn-input h-auto py-2"
-              onChange={(e) => {
-                const files = e.currentTarget.files;
-                e.currentTarget.setCustomValidity(files && files.length > MAX_PHOTOS ? `เลือกได้ไม่เกิน ${MAX_PHOTOS} รูป` : "");
-              }}
-            />
-            {editId && <p className="kn-field-hint">แนบใหม่จะแทนที่รูปเดิมทั้งหมด ไม่แนบ = ใช้รูปเดิม</p>}
-          </div>
-        )}
+        <div className="kn-field">
+          <label className="kn-field-label" htmlFor="photos">
+            {`รูปประกอบ (ไม่เกิน ${MAX_PHOTOS} รูป ไฟล์ละไม่เกิน 5 MB)`}
+          </label>
+          <input
+            id="photos"
+            name="photos"
+            type="file"
+            multiple
+            accept={PHOTO_TYPES.join(",")}
+            className="kn-input h-auto py-2"
+            onChange={(e) => {
+              const files = e.currentTarget.files;
+              e.currentTarget.setCustomValidity(files && files.length > MAX_PHOTOS ? `เลือกได้ไม่เกิน ${MAX_PHOTOS} รูป` : "");
+            }}
+          />
+          {editId && <p className="kn-field-hint">แนบใหม่จะแทนที่รูปเดิมทั้งหมด ไม่แนบ = ใช้รูปเดิม</p>}
+        </div>
         <Check name="isAnonymous" label="ไม่แสดงชื่อของฉันในรีวิวนี้" defaultChecked={defaults.isAnonymous} />
         <p className="text-small text-ink-muted">
           ผู้ดูแลยังเห็นว่าใครเขียนเพื่อตรวจสอบได้ แต่ชื่อจะไม่แสดงต่อผู้ใช้คนอื่น รีวิวจะเผยแพร่หลังผู้ดูแลตรวจแล้ว

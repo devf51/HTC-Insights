@@ -143,7 +143,8 @@ function ReviewCard({ r }: { r: CompanyDetail["reviews"][number] }) {
               rel="noopener noreferrer"
               className="relative block aspect-[4/3] overflow-hidden rounded-md bg-surface-200"
             >
-              <Image src={p.url} alt="รูปประกอบรีวิว" fill sizes="(min-width: 768px) 280px, 45vw" className="object-cover" />
+              {/* unoptimized: รูปอยู่หลัง guard (app/api/files/) ตัวย่อรูปของ Next ดึงโดยไม่มีคุกกี้ผู้ใช้ — ย่อไว้แล้วตอนอัปโหลด */}
+              <Image src={p.url} alt="รูปประกอบรีวิว" fill unoptimized className="object-cover" />
             </a>
           ))}
         </div>

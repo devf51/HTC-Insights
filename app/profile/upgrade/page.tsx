@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/Card";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { UpgradeForm } from "@/components/UpgradeForm";
 import { requireUser } from "@/lib/auth";
-import { uploadsEnabled } from "@/lib/cloudinary";
 import { departmentLabel } from "@/lib/departments";
 import { myUpgradeRequests } from "@/lib/upgrades";
 import { thaiDate } from "@/lib/thai-time";
@@ -23,10 +22,6 @@ export default async function UpgradePage() {
         <p role="status" className="rounded-lg border border-line bg-signal-tint px-4 py-3">
           คำขอของคุณกำลังรอตรวจ ผลจะแจ้งที่กระดิ่งแจ้งเตือน
         </p>
-      ) : !uploadsEnabled() ? (
-        <EmptyState icon="badge" title="ยังเปิดรับคำขอไม่ได้">
-          ระบบอัปโหลดรูปบัตรยังไม่ได้ตั้งค่า ติดต่อผู้ดูแล
-        </EmptyState>
       ) : (
         <UpgradeForm />
       )}
