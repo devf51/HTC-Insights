@@ -8,7 +8,6 @@ const INSIGHTS: NavItem = { href: "/insights", label: "สถานประก�
 const COMMUNITY: NavItem = { href: "/community", label: "ชุมชน", icon: "forum" };
 const JOBS: NavItem = { href: "/jobs", label: "ตำแหน่งงาน", short: "หางาน", icon: "work" };
 const POST_JOB: NavItem = { href: "/employer/register", label: "ลงประกาศ", icon: "add_business" };
-const PROFILE: NavItem = { href: "/profile", label: "โปรไฟล์", icon: "person" };
 const ADMIN: NavItem = { href: "/admin", label: "ผู้ดูแล", icon: "shield_person" };
 
 /** ไอคอนเฟืองมุมขวาของ TopNav ทุกบทบาท — ไม่อยู่ใน navFor เพราะเมนูเต็ม 5 ช่องแล้ว */
@@ -18,9 +17,9 @@ export const SETTINGS: NavItem = { href: "/settings", label: "ตั้งค่
 export function navFor(role: Role | null): NavItem[] {
   switch (role) {
     case "STUDENT":
-      return [HOME, INSIGHTS, COMMUNITY, JOBS, PROFILE];
+      return [HOME, INSIGHTS, COMMUNITY, JOBS];
     case "EXTERNAL":
-      return [HOME, JOBS, POST_JOB, PROFILE];
+      return [HOME, JOBS, POST_JOB];
     case "ADMIN":
       return [HOME, INSIGHTS, COMMUNITY, JOBS, ADMIN];
     default:
@@ -29,10 +28,9 @@ export function navFor(role: Role | null): NavItem[] {
 }
 
 /** ปุ่มเดียวมุมขวาบนของ TopNav (แสดงทั้งมือถือและจอกว้าง) */
-export function actionFor(role: Role | null): NavAction | null {
+export function actionFor(role: Role | null): NavAction {
   if (role === null) return { href: "/login", label: "เข้าสู่ระบบ" };
-  if (role === "ADMIN") return { href: "/profile", label: "โปรไฟล์" };
-  return null;
+  return { href: "/profile", label: "โปรไฟล์" };
 }
 
 /** หน้าแรกต้องตรงเป๊ะ ไม่งั้น active ทุกหน้า ส่วนอื่นนับหน้าย่อยด้วย */

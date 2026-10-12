@@ -7,8 +7,8 @@ const ROLES = [null, "STUDENT", "EXTERNAL", "ADMIN"];
 test("เมนูแต่ละบทบาทตรงตามสเปก", () => {
   const hrefs = (r) => navFor(r).map((i) => i.href);
   assert.deepEqual(hrefs(null), ["/", "/jobs"]);
-  assert.deepEqual(hrefs("STUDENT"), ["/", "/insights", "/community", "/jobs", "/profile"]);
-  assert.deepEqual(hrefs("EXTERNAL"), ["/", "/jobs", "/employer/register", "/profile"]);
+  assert.deepEqual(hrefs("STUDENT"), ["/", "/insights", "/community", "/jobs"]);
+  assert.deepEqual(hrefs("EXTERNAL"), ["/", "/jobs", "/employer/register"]);
   assert.deepEqual(hrefs("ADMIN"), ["/", "/insights", "/community", "/jobs", "/admin"]);
 });
 
@@ -21,11 +21,11 @@ test("ตั้งค่าเป็นไอคอนในแถบบน ไ�
   for (const r of ROLES) assert.ok(!navFor(r).some((i) => i.href === SETTINGS.href), String(r));
 });
 
-test("ปุ่มขวาบน: ผู้เยี่ยมชมไปเข้าสู่ระบบ ผู้ดูแลไปโปรไฟล์ นอกนั้นไม่มี", () => {
+test("ปุ่มขวาบน: ผู้เยี่ยมชมไปเข้าสู่ระบบ ทุกบทบาทที่ล็อกอินไปโปรไฟล์", () => {
   assert.equal(actionFor(null)?.href, "/login");
   assert.equal(actionFor("ADMIN")?.href, "/profile");
-  assert.equal(actionFor("STUDENT"), null);
-  assert.equal(actionFor("EXTERNAL"), null);
+  assert.equal(actionFor("STUDENT")?.href, "/profile");
+  assert.equal(actionFor("EXTERNAL")?.href, "/profile");
 });
 
 test("ป้ายบนแถบล่างไม่เกิน 8 ตัวอักษร ไม่งั้นล้นช่องที่ 375px", () => {
