@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { PAGE_SIZE, isListed, reviewAuthor, safeUrl, searchCompanies, summarize } from "../lib/company-rules.ts";
+import { PAGE_SIZE, isListed, nameKey, reviewAuthor, safeUrl, searchCompanies, similarCompanies, summarize } from "../lib/company-rules.ts";
 
 const co = (id, extra = {}) => ({ id, name: `บริษัท ${id}`, address: null, industry: null, lat: 7, lng: 100.5, isVerified: false, ...extra });
 const rv = (companyId, scoreOverall, extra = {}) => ({ companyId, department: "แผนกวิชาช่างยนต์", scoreOverall, dailyAllowance: null, ...extra });
@@ -103,4 +103,25 @@ test("safeUrl รับเฉพาะ http/https และเติม https �
   assert.equal(safeUrl("data:text/html,x"), null);
   assert.equal(safeUrl(""), null);
   assert.equal(safeUrl(null), null);
+});
+
+test("similarCompanies: ไม่สนคำนิติบุคคล ช่องว่าง ตัวพิมพ์ และชื่อที่อยู่ในอีกชื่อ", () => {
+  const all = [
+    { id: "a", name: "บริษัท หาดใหญ่ออโต้ จำกัด" },
+    { id: "b", name: "หาดใหญ่ ออโต้" },
+    { id: "c", name: "หาดใหญ่ออโต้ สาขาสงขลา" },
+    { id: "d", name: "HATYAI AUTO CO., LTD." },
+    { id: "e", name: "Hatyai Auto" },
+    { id: "f", name: "ร้านซ่อมแอร์" },
+  ];
+  assert.deepEqual(similarCompanies(all[0], all).map((c) => c.id), ["b", "c"]);
+  assert.deepEqual(similarCompanies(all[3], all).map((c) => c.id), ["e"]);
+  assert.deepEqual(similarCompanies(all[5], all), []);
+  // ชื่อที่เหลือแต่คำนิติบุคคลไม่จับคู่กับทุกบริษัท
+  assert.deepEqual(similarCompanies({ id: "x", name: "บริษัท จำกัด" }, all), []);
+});
+
+test("nameKey: คำอังกฤษนิติบุคคลตัดเฉพาะทั้งคำ", () => {
+  assert.equal(nameKey("Coffee Co., Ltd."), "coffee");
+  assert.equal(nameKey("Incredible Company Limited"), "incredible");
 });

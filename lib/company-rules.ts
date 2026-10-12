@@ -101,3 +101,23 @@ export function safeUrl(raw: string | null): string | null {
     return null;
   }
 }
+
+// คำนำหน้าและคำลงท้ายนิติบุคคล — "บริษัท เอ จำกัด" กับ "เอ" ถือเป็นชื่อเดียวกัน
+const LEGAL_WORDS = /บริษัท|บจก\.?|ห้างหุ้นส่วนจำกัด|หจก\.?|จำกัด|มหาชน|\b(?:co|ltd|limited|inc|company)\b\.?|[\s.,()-]/giu;
+
+/** ชื่อสำหรับเทียบหาบริษัทซ้ำ — ไม่ใช่สำหรับแสดง */
+export const nameKey = (name: string) => name.toLowerCase().replace(LEGAL_WORDS, "");
+
+/**
+ * บริษัทที่ชื่อคล้าย target ให้ผู้ดูแลตัดสินว่าลงทะเบียนซ้ำหรือไม่ — ชื่อเท่ากันหรือชื่อหนึ่งอยู่ในอีกชื่อ
+ * ponytail: ชื่ออย่างเดียว ไม่ดูพิกัด สาขาของเชนเดียวกันจะขึ้นเป็นคู่คล้ายด้วย ผู้ดูแลเป็นคนตัดสิน
+ */
+export function similarCompanies<T extends { id: string; name: string }>(target: { id: string; name: string }, all: T[]): T[] {
+  const k = nameKey(target.name);
+  if (k.length < 2) return [];
+  return all.filter((c) => {
+    if (c.id === target.id) return false;
+    const o = nameKey(c.name);
+    return o.length >= 2 && (o === k || o.includes(k) || k.includes(o));
+  });
+}

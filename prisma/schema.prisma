@@ -129,7 +129,7 @@ model Employer {
   createdAt    DateTime @default(now())
 
   user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companies Company[]
+  company   Company? // หนึ่งบัญชีหนึ่งสถานประกอบการ — Company.employerId @unique บังคับทั้งสองทาง
   jobs      JobPosting[]
 }
 
@@ -148,7 +148,7 @@ model Company {
   // place_id ของ Google Maps (ผ่าน SerpApi) — unique กันบริษัทเดียวกันถูกสร้างซ้ำเมื่อหลายคนเลือกจากผลค้นหา
   // SQLite ยอมให้ NULL ซ้ำได้ บริษัทที่กรอกเองจึงไม่ชนกัน
   googlePlaceId String?  @unique
-  employerId    String?
+  employerId    String?  @unique
   createdAt     DateTime @default(now())
 
   employer Employer?    @relation(fields: [employerId], references: [id], onDelete: SetNull)

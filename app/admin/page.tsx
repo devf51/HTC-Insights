@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { EmptyState } from "@/components/EmptyState";
 import { ModerationActions } from "@/components/ModerationActions";
 import { ReportActions } from "@/components/ReportActions";
-import { VerifyCompanyButton } from "@/components/VerifyCompanyButton";
 import { PageShell } from "@/components/PageShell";
 import { Badge } from "@/components/ui/Badge";
 import { buttonClass } from "@/components/ui/Button";
@@ -242,10 +241,23 @@ async function Companies() {
     <ul className="flex flex-col gap-4">
       {items.map((c) => (
         <li key={c.id}>
-          <Card eyebrow={thaiDateTime(c.createdAt)} title={c.name} footer={<VerifyCompanyButton id={c.id} />}>
+          <Card eyebrow={thaiDateTime(c.createdAt)} title={c.name} footer={<ModerationActions endpoint={`/api/admin/companies/${c.id}`} />}>
             {c.employer && <Who user={c.employer.user} />}
             <Text label="ที่อยู่">{c.address}</Text>
             <p>{`ติดต่อ ${c.employer?.contactEmail ?? "-"}${c.phone ? ` ${c.phone}` : ""}${c.lat === null ? " · ไม่ได้ปักหมุด" : ""}`}</p>
+            {/* หนึ่งบริษัทหนึ่งบัญชี — ซ้ำกับที่มีอยู่ให้ปฏิเสธพร้อมเหตุผล */}
+            {c.similar.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <Badge tone="warning">{`ชื่อคล้ายกับที่มีอยู่ ${c.similar.length} แห่ง ตรวจว่าซ้ำหรือไม่`}</Badge>
+                <ul className="flex flex-col gap-1 text-small">
+                  {c.similar.map((s) => (
+                    <li key={s.id} className="break-words">
+                      {`${s.name}${s.address ? ` · ${s.address}` : ""} · ${s.isVerified ? "ยืนยันแล้ว" : "ยังไม่ยืนยัน"} · ${s.employerId ? "มีบัญชีผู้ประกอบการแล้ว" : "ยังไม่มีเจ้าของ"}`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Card>
         </li>
       ))}

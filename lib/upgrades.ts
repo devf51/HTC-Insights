@@ -5,7 +5,7 @@ import { uploadImage, uploadsEnabled } from "./cloudinary";
 import { db, isPrismaError } from "./db";
 import { UserError } from "./http";
 import { photoError } from "./review-rules";
-import type { UpgradeDecision, UpgradeFields } from "./validation";
+import type { AdminDecision, UpgradeFields } from "./validation";
 
 // คำขอยืนยันสิทธิ์นักศึกษา (สเปกข้อ 11) — ยื่นได้เฉพาะบุคคลภายนอก ที่รอตรวจได้ครั้งละหนึ่ง (UpgradeRequest_one_pending)
 // ponytail: รูปบัตรอัปโหลดเป็นรูปสาธารณะของ Cloudinary (URL เดาไม่ได้) แสดงเฉพาะผู้ดูแล — ถ้าต้องปิดจริงใช้ type "authenticated" + signed URL
@@ -62,7 +62,7 @@ export async function pendingUpgrades() {
 }
 
 /** อนุมัติ = บทบาทนักศึกษา + ข้อมูลนักศึกษา · ทั้งหมดพร้อมแจ้งเตือนและประวัติในทรานแซกชันเดียว */
-export async function decideUpgrade(id: string, input: UpgradeDecision): Promise<{ status: "APPROVED" | "REJECTED" }> {
+export async function decideUpgrade(id: string, input: AdminDecision): Promise<{ status: "APPROVED" | "REJECTED" }> {
   const admin = await requireAdmin();
   const reason = input.decision === "REJECTED" ? input.reason : null;
   await db.$transaction(async (tx) => {

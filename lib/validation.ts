@@ -289,12 +289,13 @@ export const upgradeFieldsSchema = z.object({
 });
 export type UpgradeFields = z.infer<typeof upgradeFieldsSchema>;
 
-export const upgradeDecisionSchema = z.discriminatedUnion(
+/** อนุมัติ หรือปฏิเสธพร้อมเหตุผล — คำขอยืนยันสิทธิ์และการลงทะเบียนสถานประกอบการ */
+export const adminDecisionSchema = z.discriminatedUnion(
   "decision",
   [z.object({ decision: z.literal("APPROVED") }), z.object({ decision: z.literal("REJECTED"), reason: adminText("ระบุเหตุผลที่ปฏิเสธ") })],
   { error: "เลือกอนุมัติหรือปฏิเสธ" },
 );
-export type UpgradeDecision = z.infer<typeof upgradeDecisionSchema>;
+export type AdminDecision = z.infer<typeof adminDecisionSchema>;
 
 export const userChangeSchema = z.discriminatedUnion(
   "action",

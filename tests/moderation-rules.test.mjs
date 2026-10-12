@@ -104,5 +104,6 @@ test("ชื่อเป้าหมายและการกระทำใ�
   assert.equal(actionLabel("withdraw_report"), "ถอนเนื้อหาตามข้อร้องเรียน");
   assert.equal(actionLabel("approve_upgrade"), "อนุมัติคำขอยืนยันสิทธิ์");
   assert.equal(actionLabel("verify_company"), "ยืนยันสถานประกอบการ");
+  assert.equal(actionLabel("reject_company"), "ปฏิเสธสถานประกอบการ");
   assert.equal(actionLabel("constructor"), "constructor");
 });

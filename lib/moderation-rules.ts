@@ -86,6 +86,7 @@ const ACTIONS: Record<string, string> = {
   ban_user: "ระงับบัญชี",
   unban_user: "ยกเลิกการระงับบัญชี",
   verify_company: "ยืนยันสถานประกอบการ",
+  reject_company: "ปฏิเสธสถานประกอบการ",
 };
 
 /** ชื่อการกระทำในประวัติผู้ดูแล — การกระทำที่รู้จัก หรือรูปแบบ <verb>_<kind> ที่ moderate() เขียน · อื่น ๆ คืนค่าเดิม */
@@ -148,4 +149,13 @@ export function reportNotice(kind: ReportKind, action: ReportAction, note: strin
 /** หลักการโดเมนข้อ 4 — ผู้ประกอบการรู้ว่าสถานประกอบการขึ้นหน้าค้นหาของนักศึกษาแล้ว */
 export function companyVerifiedNotice(name: string) {
   return { type: "company_verified", message: `สถานประกอบการ "${excerpt(name)}" ได้รับการยืนยันจากวิทยาลัยแล้ว นักศึกษาค้นหาเจอแล้ว`, link: "/profile" };
+}
+
+/** ปฏิเสธการลงทะเบียน (เช่นซ้ำกับที่มีเจ้าของแล้ว) — การลงทะเบียนถูกลบ ลงทะเบียนใหม่ได้ */
+export function companyRejectedNotice(name: string, reason: string) {
+  return {
+    type: "company_rejected",
+    message: `การลงทะเบียนสถานประกอบการ "${excerpt(name)}" ไม่ผ่านการยืนยัน เหตุผล: ${reason}`,
+    link: "/employer/register",
+  };
 }

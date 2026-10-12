@@ -79,7 +79,7 @@ export async function registerEmployer(input: EmployerInput): Promise<{ id: stri
       data: {
         ...employer,
         userId: user.id,
-        companies: { create: { name: employer.companyName, address, lat, lng, phone: employer.phone } },
+        company: { create: { name: employer.companyName, address, lat, lng, phone: employer.phone } },
       },
       select: { id: true },
     });
@@ -94,15 +94,15 @@ export async function createJob(input: JobInput): Promise<{ id: string }> {
   const user = await requireRole("EXTERNAL");
   const employer = await db.employer.findUnique({
     where: { userId: user.id },
-    select: { id: true, departments: true, companies: { select: { id: true }, orderBy: { createdAt: "asc" }, take: 1 } },
+    select: { id: true, departments: true, company: { select: { id: true } } },
   });
-  if (!employer || employer.companies.length === 0) throw new UserError(403, "ลงทะเบียนสถานประกอบการก่อนลงประกาศ");
+  if (!employer?.company) throw new UserError(403, "ลงทะเบียนสถานประกอบการก่อนลงประกาศ");
   if (!parseDepartments(employer.departments).includes(input.department)) {
     throw new UserError(400, "แผนกนี้ไม่อยู่ในแผนกที่สถานประกอบการเปิดรับ");
   }
   try {
     return await db.jobPosting.create({
-      data: { ...input, employerId: employer.id, companyId: employer.companies[0].id },
+      data: { ...input, employerId: employer.id, companyId: employer.company.id },
       select: { id: true },
     });
   } catch (e) {

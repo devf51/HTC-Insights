@@ -5,13 +5,15 @@ import {
   reviewAuthor,
   round1,
   searchCompanies,
+  similarCompanies,
   summarize,
   type SearchFilters,
   type SearchResult,
 } from "./company-rules";
 import { db } from "./db";
 import { UserError } from "./http";
-import { companyVerifiedNotice } from "./moderation-rules";
+import { companyRejectedNotice, companyVerifiedNotice } from "./moderation-rules";
+import type { AdminDecision } from "./validation";
 
 // ทุกฟังก์ชันเริ่มด้วย guard เอง — Next 16 ให้ตรวจสิทธิ์ใกล้ข้อมูล เพราะ layout ไม่ re-render ตอนเปลี่ยนหน้า
 // (node_modules/next/dist/docs/01-app/02-guides/authentication.md "Layouts and auth checks")
@@ -102,38 +104,58 @@ export async function getCompany(id: string) {
 
 export type CompanyDetail = NonNullable<Awaited<ReturnType<typeof getCompany>>>;
 
-/** สถานประกอบการที่ลงทะเบียนผ่านบัญชีผู้ประกอบการและรอผู้ดูแลยืนยัน — ยังไม่ขึ้น /insights จนกว่าจะยืนยัน */
+/**
+ * สถานประกอบการที่ลงทะเบียนผ่านบัญชีผู้ประกอบการและรอผู้ดูแลยืนยัน — ยังไม่ขึ้น /insights จนกว่าจะยืนยัน
+ * similar: บริษัทชื่อคล้ายที่มีอยู่แล้ว ให้ผู้ดูแลตัดสินว่าลงทะเบียนซ้ำหรือไม่ (หนึ่งบริษัทหนึ่งบัญชี)
+ */
 export async function pendingCompanies() {
   await requireAdmin();
-  // ponytail: 50 แห่งเก่าสุดก่อน เหมือนคิวเนื้อหา
-  return db.company.findMany({
-    // บัญชีที่ถูกระงับไม่ต้องตรวจ — ไม่งั้นการลงทะเบียนขยะดันรายการจริงตกคิว 50 แห่ง
-    where: { isVerified: false, employer: { user: { isBanned: false } } },
-    orderBy: { createdAt: "asc" },
-    take: 50,
-    select: {
-      id: true,
-      name: true,
-      address: true,
-      phone: true,
-      lat: true,
-      lng: true,
-      createdAt: true,
-      employer: { select: { contactEmail: true, user: { select: { name: true, email: true } } } },
-    },
-  });
+  // ponytail: 50 แห่งเก่าสุดก่อน เหมือนคิวเนื้อหา · ดึงชื่อทุกบริษัทมาเทียบในหน่วยความจำ — วิทยาลัยเดียวหลักร้อยบริษัท
+  const [pending, all] = await Promise.all([
+    db.company.findMany({
+      // บัญชีที่ถูกระงับไม่ต้องตรวจ — ไม่งั้นการลงทะเบียนขยะดันรายการจริงตกคิว 50 แห่ง
+      where: { isVerified: false, employer: { user: { isBanned: false } } },
+      orderBy: { createdAt: "asc" },
+      take: 50,
+      select: {
+        id: true,
+        name: true,
+        address: true,
+        phone: true,
+        lat: true,
+        lng: true,
+        createdAt: true,
+        employer: { select: { contactEmail: true, user: { select: { name: true, email: true } } } },
+      },
+    }),
+    db.company.findMany({ select: { id: true, name: true, address: true, isVerified: true, employerId: true } }),
+  ]);
+  return pending.map((c) => ({ ...c, similar: similarCompanies(c, all) }));
 }
 
-/** ยืนยันสถานประกอบการ — แจ้งเจ้าของบัญชีผู้ประกอบการและลงประวัติในทรานแซกชันเดียว (หลักการโดเมนข้อ 3–4) */
-export async function verifyCompany(id: string): Promise<{ isVerified: true }> {
+/**
+ * ยืนยันหรือปฏิเสธการลงทะเบียนสถานประกอบการ — แจ้งผู้ประกอบการและลงประวัติในทรานแซกชันเดียว (หลักการโดเมนข้อ 3–4)
+ * ปฏิเสธ = ลบการลงทะเบียน (บัญชีผู้ประกอบการกับประกาศงาน) ให้บัญชีลงทะเบียนใหม่ได้ บริษัทที่ยังไม่มีรีวิวลบตามไปด้วย
+ */
+export async function decideCompany(id: string, input: AdminDecision): Promise<{ isVerified: boolean }> {
   const admin = await requireAdmin();
   await db.$transaction(async (tx) => {
-    const c = await tx.company.findUnique({ where: { id }, select: { name: true, isVerified: true, employer: { select: { userId: true } } } });
-    if (!c) throw new UserError(404, "ไม่พบสถานประกอบการ");
+    const c = await tx.company.findUnique({ where: { id }, select: { name: true, isVerified: true, employer: { select: { id: true, userId: true } } } });
+    if (!c) throw new UserError(404, "ไม่พบสถานประกอบการ รีเฟรชหน้าเพื่อดูสถานะล่าสุด");
     if (c.isVerified) throw new UserError(409, "สถานประกอบการนี้ยืนยันแล้ว รีเฟรชหน้าเพื่อดูสถานะล่าสุด");
-    await tx.company.update({ where: { id }, data: { isVerified: true } });
-    if (c.employer) await notify(tx, c.employer.userId, companyVerifiedNotice(c.name));
-    await logAdminAction(tx, admin.id, "verify_company", { type: "company", id }, c.name);
+    if (input.decision === "APPROVED") {
+      await tx.company.update({ where: { id }, data: { isVerified: true } });
+      if (c.employer) await notify(tx, c.employer.userId, companyVerifiedNotice(c.name));
+      await logAdminAction(tx, admin.id, "verify_company", { type: "company", id }, c.name);
+      return;
+    }
+    if (!c.employer) throw new UserError(409, "สถานประกอบการนี้ไม่มีบัญชีผู้ประกอบการผูกอยู่ รีเฟรชหน้าเพื่อดูสถานะล่าสุด");
+    // ประกาศงาน cascade ตาม Employer · Company.employer เป็น SetNull จึงลบบริษัทเองถ้าไม่มีรีวิว (กันลบรีวิวของนักศึกษา)
+    await tx.employer.delete({ where: { id: c.employer.id } });
+    await tx.company.deleteMany({ where: { id, reviews: { none: {} } } });
+    await notify(tx, c.employer.userId, companyRejectedNotice(c.name, input.reason));
+    // ชื่ออยู่ใน detail ด้วย — แถวบริษัทอาจถูกลบไปแล้ว
+    await logAdminAction(tx, admin.id, "reject_company", { type: "company", id }, `${c.name}: ${input.reason}`);
   });
-  return { isVerified: true };
+  return { isVerified: input.decision === "APPROVED" };
 }
