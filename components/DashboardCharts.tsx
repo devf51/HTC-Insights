@@ -11,18 +11,18 @@ export const DimensionChart = dynamic(() => import("./DashboardChartsInner").the
 export const ApprovalChart = dynamic(() => import("./DashboardChartsInner").then((m) => m.ApprovalChart), { ssr: false, loading });
 export const TopCompanyChart = dynamic(() => import("./DashboardChartsInner").then((m) => m.TopCompanyChart), { ssr: false, loading });
 
-/** หน้าจอ: ตามธีมผ่าน CSS variable */
+/** หน้าจอ: ตามธีมผ่าน CSS variable — chart-1 (signal) chart-2 (slate) chart-6 (เทา) ตาม Kernel charts.md */
 export const SCREEN_PALETTE: ChartPalette = {
-  series: ["var(--viz-1)", "var(--viz-2)", "var(--viz-3)"],
+  series: ["var(--signal)", "var(--slate)", "var(--chart-6)"],
   ink: "var(--ink)",
   muted: "var(--ink-muted)",
   grid: "var(--line)",
   surface: "var(--surface-100)",
 };
 
-/** รายงาน A4: hex ล้วน พื้นขาวเสมอ — ค่าเดียวกับธีมสว่าง */
+/** รายงาน A4: hex ล้วน พื้นขาวเสมอ — chart-1/2/6 ของธีม Paper */
 export const PRINT_PALETTE: ChartPalette = {
-  series: ["#2a78d6", "#eb6834", "#1baf7a"],
+  series: ["#0f6b52", "#5a80b8", "#c5c9ce"],
   ink: "#15181b",
   muted: "#565b60",
   grid: "#d9dbd5",
