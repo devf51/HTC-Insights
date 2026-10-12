@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เข้าสู่ระบบด้วย Google · HTC Insights</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif Thai', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 960px; display: block; }
+    svg .n { fill: #2d3142; font-size: 12px; font-weight: 600; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .s { fill: #4f5d75; font-size: 11px; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .m { fill: #4f5d75; font-size: 9px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; text-anchor: middle; }
+    svg .l { fill: #4f5d75; font-size: 12px; font-weight: 500; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .lk { fill: #4f5d75; font-size: 10px; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; }
+    svg .t { fill: #4f5d75; font-size: 7px; font-family: 'Geist Mono', monospace; text-anchor: middle; letter-spacing: 0.08em; }
+    svg .g { fill: #4f5d75; font-size: 9px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; letter-spacing: 0.04em; }
+    svg .et { fill: #4f5d75; font-size: 8px; font-family: 'Geist Mono', monospace; letter-spacing: 0.14em; }
+    svg .e { fill: #2d3142; font-size: 14px; font-weight: 600; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; }
+    svg .f { fill: #2d3142; font-size: 10px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; }
+    svg .ft { fill: #4f5d75; font-size: 10px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; text-anchor: end; }
+    svg .c { fill: #4f5d75; font-size: 10px; font-weight: 600; font-family: 'Geist Mono', monospace; text-anchor: middle; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">Sequence · 1 / 3 · HTC Insights</p>
+    <h1>เข้าสู่ระบบด้วย Google</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 960 876" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="htc-sequence-login-title htc-sequence-login-desc">
+        <title id="htc-sequence-login-title">ลำดับการเข้าสู่ระบบด้วย Google ของ HTC Insights</title>
+        <desc id="htc-sequence-login-desc">ผู้ใช้เข้าสู่ระบบผ่าน Auth.js กับ Google ระบบหาบัญชีเดิม ปฏิเสธบัญชีที่อีเมลยังไม่ยืนยันหรือถูกระงับ ถ้าผ่านจะสร้างบัญชีใหม่พร้อมบทบาทตามอีเมล บันทึก session แล้วพากลับหน้าแรกตามบทบาท</desc>
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/>
+        <rect x="64" y="428" width="588" height="292" rx="4" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <rect x="64" y="428" width="40" height="16" rx="2" fill="#f5f5f5" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="84" y="440" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" text-anchor="middle" letter-spacing="0.12em">ALT</text>
+        <line x1="72" y1="524" x2="644" y2="524" stroke="rgba(45,49,66,0.20)" stroke-width="1" stroke-dasharray="4,3"/>
+        <line x1="112" y1="80" x2="112" y2="740" stroke="rgba(45,49,66,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="356" y1="80" x2="356" y2="740" stroke="rgba(45,49,66,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="604" y1="80" x2="604" y2="740" stroke="rgba(45,49,66,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="848" y1="80" x2="848" y2="740" stroke="rgba(45,49,66,0.22)" stroke-width="1" stroke-dasharray="3,3"/>
+        <rect class="mk" x="124" y="448" width="52" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="g" x="130" y="458" style="text-anchor:start">[ไม่ผ่าน]</text>
+        <rect class="mk" x="124" y="536" width="40" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="g" x="130" y="546" style="text-anchor:start">[ผ่าน]</text>
+        <rect x="352" y="128" width="8" height="572" fill="rgba(45,49,66,0.06)" stroke="#4f5d75" stroke-width="0.8"/>
+        <line x1="112" y1="136" x2="352" y2="136" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <line x1="360" y1="188" x2="848" y2="188" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <line x1="848" y1="240" x2="360" y2="240" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <line x1="360" y1="292" x2="604" y2="292" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="604" y1="344" x2="360" y2="344" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <path d="M360 396 L384 396 Q392 396 392 404 L392 412 Q392 420 384 420 L362 420" fill="none" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="352" y1="500" x2="112" y2="500" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <line x1="360" y1="588" x2="604" y2="588" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="360" y1="640" x2="604" y2="640" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <line x1="352" y1="692" x2="112" y2="692" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <rect class="mk" x="164" y="114" width="140" height="16" rx="2" fill="#f5f5f5"/>
+        <text class="l" x="234" y="126" style="fill:#2e5aa8;text-anchor:middle">เข้าสู่ระบบด้วย Google</text>
+        <rect class="mk" x="436" y="168" width="92" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="m" x="482" y="178" style="fill:#2e5aa8;text-anchor:middle">OAuth redirect</text>
+        <rect class="mk" x="656" y="220" width="144" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="m" x="728" y="230" style="text-anchor:middle">profile · email_verified</text>
+        <rect class="mk" x="416" y="270" width="128" height="16" rx="2" fill="#f5f5f5"/>
+        <text class="l" x="480" y="282" style="text-anchor:middle">หาบัญชี Google เดิม</text>
+        <rect class="mk" x="432" y="322" width="100" height="16" rx="2" fill="#f5f5f5"/>
+        <text class="l" x="482" y="334" style="text-anchor:middle">User หรือไม่พบ</text>
+        <rect class="mk" x="404" y="400" width="184" height="16" rx="2" fill="#f5f5f5"/>
+        <text class="l" x="410" y="412" style="text-anchor:start">ยืนยันอีเมลแล้ว และไม่ถูกระงับ?</text>
+        <rect class="mk" x="156" y="478" width="156" height="16" rx="2" fill="#f5f5f5"/>
+        <text class="l" x="234" y="490" style="text-anchor:middle">กลับ /login พร้อมเหตุผล</text>
+        <rect class="mk" x="384" y="566" width="192" height="16" rx="2" fill="#f5f5f5"/>
+        <text class="l" x="480" y="578" style="text-anchor:middle">บัญชีใหม่: สร้าง User + บทบาท</text>
+        <rect class="mk" x="436" y="620" width="92" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="m" x="482" y="630" style="text-anchor:middle">INSERT Session</text>
+        <rect class="mk" x="148" y="670" width="176" height="16" rx="2" fill="#f5f5f5"/>
+        <text class="l" x="236" y="682" style="fill:#eb6c36;text-anchor:middle">cookie → หน้าแรกตามบทบาท</text>
+        <rect class="nd" x="40" y="24" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="24" width="144" height="56" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <rect x="48" y="32" width="28" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+        <text class="t" x="62" y="41" style="fill:#7a8399">USER</text>
+        <text class="n" x="112" y="58.5">ผู้ใช้</text>
+        <text class="m" x="112" y="74.5">เบราว์เซอร์</text>
+        <rect class="nd" x="284" y="24" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="284" y="24" width="144" height="56" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <rect x="292" y="32" width="28" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+        <text class="t" x="306" y="41" style="fill:#eb6c36">AUTH</text>
+        <text class="n" x="356" y="58.5">Auth.js v5</text>
+        <text class="m" x="356" y="74.5">/api/auth/*</text>
+        <rect class="nd" x="532" y="24" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="532" y="24" width="144" height="56" rx="6" fill="rgba(45,49,66,0.05)" stroke="#4f5d75" stroke-width="1"/>
+        <rect x="540" y="32" width="20" height="12" rx="2" fill="transparent" stroke="rgba(79,93,117,0.40)" stroke-width="0.8"/>
+        <text class="t" x="550" y="41" style="fill:#4f5d75">DB</text>
+        <text class="n" x="604" y="58.5">SQLite</text>
+        <text class="m" x="604" y="74.5">User · Account · Session</text>
+        <rect class="nd" x="776" y="24" width="144" height="56" rx="6" fill="#f5f5f5"/>
+        <rect x="776" y="24" width="144" height="56" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="784" y="32" width="24" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text class="t" x="796" y="41" style="fill:#4f5d75">EXT</text>
+        <text class="n" x="848" y="58.5">Google</text>
+        <text class="m" x="848" y="74.5">OAuth 2.0</text>
+        <line x1="40" y1="768" x2="920" y2="768" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="784" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+        <line x1="40" y1="804" x2="68" y2="804" stroke="#4f5d75" stroke-width="1.2" marker-end="url(#arrow)"/>
+        <text class="lk" x="76" y="808">เรียกภายใน</text>
+        <line x1="160" y1="804" x2="188" y2="804" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <text class="lk" x="196" y="808">HTTP / บริการภายนอก</text>
+        <line x1="332" y1="804" x2="360" y2="804" stroke="#4f5d75" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)"/>
+        <text class="lk" x="368" y="808">ตอบกลับ</text>
+        <line x1="432" y1="804" x2="460" y2="804" stroke="#eb6c36" stroke-width="1.4" marker-end="url(#arrow-accent)"/>
+        <text class="lk" x="468" y="808">ผลสำเร็จหลัก</text>
+        <rect x="556" y="794" width="8" height="20" fill="rgba(45,49,66,0.06)" stroke="#4f5d75" stroke-width="0.8"/>
+        <text class="lk" x="572" y="808">กำลังทำงาน</text>
+        <rect x="656" y="796" width="28" height="16" rx="4" fill="rgba(45,49,66,0.02)" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text x="670" y="807" fill="#4f5d75" font-size="7" font-family="'Geist Mono', monospace" text-anchor="middle">ALT</text>
+        <text class="lk" x="692" y="808">ทางแยก</text>
+        <text class="lk" x="40" y="836">บทบาทตัดสินครั้งเดียวตอนสร้างบัญชี: SUPER_ADMIN_EMAIL → ADMIN + isSuperAdmin · โดเมนวิทยาลัย → STUDENT · อื่น ๆ → EXTERNAL</text>
+        <text class="lk" x="40" y="854">เข้าสู่ระบบครั้งต่อไปไม่แตะบทบาท จึงไม่ทับสิ่งที่ผู้ดูแลเปลี่ยนไว้ · session เก็บในฐานข้อมูล ไม่ใช่ JWT</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

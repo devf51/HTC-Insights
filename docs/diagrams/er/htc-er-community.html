@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เว็บบอร์ด แจ้งเตือน ข้อร้องเรียน และประวัติผู้ดูแล · HTC Insights</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif Thai', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 1032px; display: block; }
+    svg .n { fill: #2d3142; font-size: 12px; font-weight: 600; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .s { fill: #4f5d75; font-size: 11px; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .m { fill: #4f5d75; font-size: 9px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; text-anchor: middle; }
+    svg .l { fill: #4f5d75; font-size: 12px; font-weight: 500; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .lk { fill: #4f5d75; font-size: 10px; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; }
+    svg .t { fill: #4f5d75; font-size: 7px; font-family: 'Geist Mono', monospace; text-anchor: middle; letter-spacing: 0.08em; }
+    svg .g { fill: #4f5d75; font-size: 9px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; letter-spacing: 0.04em; }
+    svg .et { fill: #4f5d75; font-size: 8px; font-family: 'Geist Mono', monospace; letter-spacing: 0.14em; }
+    svg .e { fill: #2d3142; font-size: 14px; font-weight: 600; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; }
+    svg .f { fill: #2d3142; font-size: 10px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; }
+    svg .ft { fill: #4f5d75; font-size: 10px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; text-anchor: end; }
+    svg .c { fill: #4f5d75; font-size: 10px; font-weight: 600; font-family: 'Geist Mono', monospace; text-anchor: middle; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">ER Diagram · 2 / 2 · HTC Insights</p>
+    <h1>เว็บบอร์ด แจ้งเตือน ข้อร้องเรียน และประวัติผู้ดูแล</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 1032 868" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="htc-er-community-title htc-er-community-desc">
+        <title id="htc-er-community-title">แบบจำลองข้อมูลชุมชนและการคัดกรองของ HTC Insights</title>
+        <desc id="htc-er-community-desc">ผู้ใช้ตั้งกระทู้ แสดงความคิดเห็นซ้อนกัน และกดถูกใจ กระทู้ชี้คำตอบที่ดีที่สุดได้หนึ่งความคิดเห็น ผู้ใช้ได้รับแจ้งเตือนและส่งข้อร้องเรียนได้ ผู้ดูแลมีประวัติการกระทำ</desc>
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/>
+        <path d="M296 316 L268 316 Q260 316 260 308 L260 128 Q260 120 252 120 L224 120" fill="none" stroke="#4f5d75" stroke-width="1"/>
+        <line x1="296" y1="352" x2="224" y2="352" stroke="#4f5d75" stroke-width="1"/>
+        <path d="M296 388 L268 388 Q260 388 260 396 L260 632 Q260 640 252 640 L224 640" fill="none" stroke="#4f5d75" stroke-width="1"/>
+        <path d="M480 316 L508 316 Q516 316 516 308 L516 128 Q516 120 524 120 L552 120" fill="none" stroke="#4f5d75" stroke-width="1"/>
+        <line x1="480" y1="400" x2="552" y2="400" stroke="#4f5d75" stroke-width="1"/>
+        <path d="M388 292 L388 24 Q388 16 396 16 L892 16 Q900 16 900 24 L900 40" fill="none" stroke="#4f5d75" stroke-width="1"/>
+        <line x1="612" y1="220" x2="612" y2="392" stroke="#4f5d75" stroke-width="1"/>
+        <line x1="692" y1="220" x2="692" y2="392" stroke="#4f5d75" stroke-width="1"/>
+        <path d="M600 552 L600 576 Q600 584 608 584 L696 584 Q704 584 704 576 L704 552" fill="none" stroke="#4f5d75" stroke-width="1"/>
+        <line x1="736" y1="120" x2="808" y2="120" stroke="#4f5d75" stroke-width="1"/>
+        <path d="M736 472 L892 472 Q900 472 900 464 L900 220" fill="none" stroke="#4f5d75" stroke-width="1"/>
+        <rect class="mk" x="276" y="310" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="284" y="320">1</text>
+        <rect class="mk" x="228" y="114" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="236" y="124">N</text>
+        <rect class="mk" x="276" y="346" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="284" y="356">1</text>
+        <rect class="mk" x="228" y="346" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="236" y="356">N</text>
+        <rect class="mk" x="276" y="382" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="284" y="392">1</text>
+        <rect class="mk" x="228" y="634" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="236" y="644">N</text>
+        <rect class="mk" x="484" y="310" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="492" y="320">1</text>
+        <rect class="mk" x="532" y="114" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="540" y="124">N</text>
+        <rect class="mk" x="484" y="394" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="492" y="404">1</text>
+        <rect class="mk" x="532" y="394" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="540" y="404">N</text>
+        <rect class="mk" x="380" y="272" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="388" y="282">1</text>
+        <rect class="mk" x="906" y="24" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="914" y="34">N</text>
+        <rect class="mk" x="604" y="228" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="612" y="238">1</text>
+        <rect class="mk" x="604" y="372" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="612" y="382">N</text>
+        <rect class="mk" x="676" y="228" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="692" y="238">0..1</text>
+        <rect class="mk" x="676" y="372" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="692" y="382">0..1</text>
+        <rect class="mk" x="592" y="560" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="600" y="570">N</text>
+        <rect class="mk" x="688" y="560" width="32" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="704" y="570">0..1</text>
+        <rect class="mk" x="740" y="114" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="748" y="124">1</text>
+        <rect class="mk" x="788" y="114" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="796" y="124">N</text>
+        <rect class="mk" x="740" y="466" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="748" y="476">1</text>
+        <rect class="mk" x="892" y="228" width="16" height="12" rx="2" fill="#f5f5f5"/>
+        <text class="c" x="900" y="238">N</text>
+        <rect class="mk" x="702" y="296" width="72" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="708" y="306" style="text-anchor:start">คำตอบที่ดีที่สุด</text>
+        <rect class="mk" x="588" y="592" width="132" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="654" y="602" style="text-anchor:middle">ตอบกลับซ้อน (parentId)</text>
+        <rect class="nd" x="40" y="40" width="184" height="160" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="40" width="184" height="160" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="40.5" y="40.5" width="183" height="39.5" rx="6" fill="rgba(45,49,66,0.04)" stroke="none"/>
+        <rect x="40.5" y="72" width="183" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="40" y1="80" x2="224" y2="80" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text class="et" x="56" y="56">ENTITY</text>
+        <text class="e" x="56" y="72">Notification</text>
+        <text class="f" x="56" y="100"># id</text>
+        <text class="ft" x="208" y="100">cuid</text>
+        <text class="f" x="56" y="120">→ userId</text>
+        <text class="ft" x="208" y="120">User</text>
+        <text class="f" x="56" y="140">type</text>
+        <text class="ft" x="208" y="140">str</text>
+        <text class="f" x="56" y="160">message</text>
+        <text class="ft" x="208" y="160">str</text>
+        <text class="f" x="56" y="180">isRead</text>
+        <text class="ft" x="208" y="180">bool</text>
+        <rect class="nd" x="40" y="240" width="184" height="240" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="240" width="184" height="240" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="40.5" y="240.5" width="183" height="39.5" rx="6" fill="rgba(45,49,66,0.04)" stroke="none"/>
+        <rect x="40.5" y="272" width="183" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="40" y1="280" x2="224" y2="280" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text class="et" x="56" y="256">ENTITY</text>
+        <text class="e" x="56" y="272">Report</text>
+        <text class="f" x="56" y="300"># id</text>
+        <text class="ft" x="208" y="300">cuid</text>
+        <text class="f" x="56" y="320">→ reporterId</text>
+        <text class="ft" x="208" y="320">User</text>
+        <text class="f" x="56" y="340">reason</text>
+        <text class="ft" x="208" y="340">str</text>
+        <text class="f" x="56" y="360">→ reviewId?</text>
+        <text class="ft" x="208" y="360">Review</text>
+        <text class="f" x="56" y="380">→ postId?</text>
+        <text class="ft" x="208" y="380">Post</text>
+        <text class="f" x="56" y="400">→ commentId?</text>
+        <text class="ft" x="208" y="400">Comment</text>
+        <text class="f" x="56" y="420">→ jobId?</text>
+        <text class="ft" x="208" y="420">JobPosting</text>
+        <text class="f" x="56" y="440">→ companyId?</text>
+        <text class="ft" x="208" y="440">Company</text>
+        <text class="f" x="56" y="460">status</text>
+        <text class="ft" x="208" y="460">ReportStatus</text>
+        <rect class="nd" x="40" y="560" width="184" height="160" rx="6" fill="#f5f5f5"/>
+        <rect x="40" y="560" width="184" height="160" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="40.5" y="560.5" width="183" height="39.5" rx="6" fill="rgba(45,49,66,0.04)" stroke="none"/>
+        <rect x="40.5" y="592" width="183" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="40" y1="600" x2="224" y2="600" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text class="et" x="56" y="576">ENTITY</text>
+        <text class="e" x="56" y="592">AuditLog</text>
+        <text class="f" x="56" y="620"># id</text>
+        <text class="ft" x="208" y="620">cuid</text>
+        <text class="f" x="56" y="640">→ adminId</text>
+        <text class="ft" x="208" y="640">Restrict</text>
+        <text class="f" x="56" y="660">action</text>
+        <text class="ft" x="208" y="660">str</text>
+        <text class="f" x="56" y="680">targetType</text>
+        <text class="ft" x="208" y="680">str</text>
+        <text class="f" x="56" y="700">targetId</text>
+        <text class="ft" x="208" y="700">str</text>
+        <rect class="nd" x="296" y="292" width="184" height="120" rx="6" fill="#f5f5f5"/>
+        <rect x="296" y="292" width="184" height="120" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="296.5" y="292.5" width="183" height="39.5" rx="6" fill="rgba(45,49,66,0.04)" stroke="none"/>
+        <rect x="296.5" y="324" width="183" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="296" y1="332" x2="480" y2="332" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text class="et" x="312" y="308">ENTITY · ดูภาพ 1/2</text>
+        <text class="e" x="312" y="324">User</text>
+        <text class="f" x="312" y="352"># id</text>
+        <text class="ft" x="464" y="352">cuid</text>
+        <text class="f" x="312" y="372">role</text>
+        <text class="ft" x="464" y="372">UserRole</text>
+        <text class="f" x="312" y="392">isBanned</text>
+        <text class="ft" x="464" y="392">bool</text>
+        <rect class="nd" x="552" y="40" width="184" height="180" rx="6" fill="#f5f5f5"/>
+        <rect x="552" y="40" width="184" height="180" rx="6" fill="rgba(235,108,54,0.04)" stroke="#eb6c36" stroke-width="1"/>
+        <rect x="552.5" y="40.5" width="183" height="39.5" rx="6" fill="rgba(235,108,54,0.10)" stroke="none"/>
+        <rect x="552.5" y="72" width="183" height="8" fill="rgba(235,108,54,0.10)"/>
+        <line x1="552" y1="80" x2="736" y2="80" stroke="rgba(235,108,54,0.40)" stroke-width="1"/>
+        <text class="et" x="568" y="56" style="fill:#eb6c36">ENTITY · ROOT</text>
+        <text class="e" x="568" y="72">CommunityPost</text>
+        <text class="f" x="568" y="100"># id</text>
+        <text class="ft" x="720" y="100">cuid</text>
+        <text class="f" x="568" y="120">→ userId</text>
+        <text class="ft" x="720" y="120">User</text>
+        <text class="f" x="568" y="140">type</text>
+        <text class="ft" x="720" y="140">PostType</text>
+        <text class="f" x="568" y="160">department?</text>
+        <text class="ft" x="720" y="160">str</text>
+        <text class="f" x="568" y="180">→ bestAnswerId?</text>
+        <text class="ft" x="720" y="180">UQ</text>
+        <text class="f" x="568" y="200">status</text>
+        <text class="ft" x="720" y="200">ContentStatus</text>
+        <rect class="nd" x="552" y="392" width="184" height="160" rx="6" fill="#f5f5f5"/>
+        <rect x="552" y="392" width="184" height="160" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="552.5" y="392.5" width="183" height="39.5" rx="6" fill="rgba(45,49,66,0.04)" stroke="none"/>
+        <rect x="552.5" y="424" width="183" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="552" y1="432" x2="736" y2="432" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text class="et" x="568" y="408">ENTITY</text>
+        <text class="e" x="568" y="424">CommunityComment</text>
+        <text class="f" x="568" y="452"># id</text>
+        <text class="ft" x="720" y="452">cuid</text>
+        <text class="f" x="568" y="472">→ postId</text>
+        <text class="ft" x="720" y="472">Post</text>
+        <text class="f" x="568" y="492">→ userId</text>
+        <text class="ft" x="720" y="492">User</text>
+        <text class="f" x="568" y="512">→ parentId?</text>
+        <text class="ft" x="720" y="512">Comment</text>
+        <text class="f" x="568" y="532">status</text>
+        <text class="ft" x="720" y="532">ContentStatus</text>
+        <rect class="nd" x="808" y="40" width="184" height="180" rx="6" fill="#f5f5f5"/>
+        <rect x="808" y="40" width="184" height="180" rx="6" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <rect x="808.5" y="40.5" width="183" height="39.5" rx="6" fill="rgba(45,49,66,0.04)" stroke="none"/>
+        <rect x="808.5" y="72" width="183" height="8" fill="rgba(45,49,66,0.04)"/>
+        <line x1="808" y1="80" x2="992" y2="80" stroke="rgba(45,49,66,0.22)" stroke-width="1"/>
+        <text class="et" x="824" y="56">ENTITY</text>
+        <text class="e" x="824" y="72">CommunityLike</text>
+        <text class="f" x="824" y="100"># id</text>
+        <text class="ft" x="976" y="100">cuid</text>
+        <text class="f" x="824" y="120">→ userId</text>
+        <text class="ft" x="976" y="120">User</text>
+        <text class="f" x="824" y="140">→ postId?</text>
+        <text class="ft" x="976" y="140">Post</text>
+        <text class="f" x="824" y="160">→ commentId?</text>
+        <text class="ft" x="976" y="160">Comment</text>
+        <text class="f" x="824" y="180">UQ (userId, postId)</text>
+        <text class="f" x="824" y="200">UQ (userId, commentId)</text>
+        <line x1="40" y1="760" x2="992" y2="760" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="776" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+        <rect x="40" y="790" width="24" height="12" rx="2" fill="rgba(235,108,54,0.04)" stroke="#eb6c36" stroke-width="1"/>
+        <text class="lk" x="72" y="800">ศูนย์กลาง</text>
+        <rect x="144" y="790" width="24" height="12" rx="2" fill="#ffffff" stroke="#2d3142" stroke-width="1"/>
+        <text class="lk" x="176" y="800">ตาราง</text>
+        <text class="c" x="248" y="800">1·N</text>
+        <text class="lk" x="268" y="800">หนึ่งต่อหลาย</text>
+        <text class="lk" x="40" y="828"># = คีย์หลัก · → = คีย์นอก · ? = ว่างได้ · UQ = unique · Report ชี้เนื้อหาได้ 5 ชนิด ใช้คอลัมน์เดียว ที่เหลือว่าง</text>
+        <text class="lk" x="40" y="846">กดถูกใจบัญชีละครั้งบังคับด้วย UQ · ข้อร้องเรียนที่รอซ้ำบังคับด้วย partial unique Report_pending_* · AuditLog ห้ามลบตามผู้ดูแล (Restrict)</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

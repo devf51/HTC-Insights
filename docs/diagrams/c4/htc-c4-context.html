@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบกับผู้ใช้และบริการภายนอก · HTC Insights</title>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Noto+Serif+Thai:wght@400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --color-paper:   #f5f5f5;
+      --color-ink:     #2d3142;
+      --color-muted:   #4f5d75;
+      --color-accent:  #eb6c36;
+      --font-sans:     'Geist', 'IBM Plex Sans Thai', system-ui, sans-serif;
+      --font-serif:    'Instrument Serif', 'Noto Serif Thai', serif;
+      --font-mono:     'Geist Mono', ui-monospace, monospace;
+    }
+    body {
+      font-family: var(--font-sans);
+      background: var(--color-paper);
+      color: var(--color-ink);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2rem;
+    }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.66rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--color-muted);
+      margin-bottom: 0.5rem;
+    }
+    h1 {
+      font-family: var(--font-serif);
+      font-size: clamp(1.5rem, 2.4vw + 0.75rem, 2rem);
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      color: var(--color-ink);
+      margin-bottom: 1.5rem;
+    }
+    svg { width: 100%; min-width: 960px; display: block; }
+    svg .n { fill: #2d3142; font-size: 12px; font-weight: 600; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .s { fill: #4f5d75; font-size: 11px; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .m { fill: #4f5d75; font-size: 9px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; text-anchor: middle; }
+    svg .l { fill: #4f5d75; font-size: 12px; font-weight: 500; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; text-anchor: middle; }
+    svg .lk { fill: #4f5d75; font-size: 10px; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; }
+    svg .t { fill: #4f5d75; font-size: 7px; font-family: 'Geist Mono', monospace; text-anchor: middle; letter-spacing: 0.08em; }
+    svg .g { fill: #4f5d75; font-size: 9px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; letter-spacing: 0.04em; }
+    svg .et { fill: #4f5d75; font-size: 8px; font-family: 'Geist Mono', monospace; letter-spacing: 0.14em; }
+    svg .e { fill: #2d3142; font-size: 14px; font-weight: 600; font-family: 'Geist', 'IBM Plex Sans Thai', sans-serif; }
+    svg .f { fill: #2d3142; font-size: 10px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; }
+    svg .ft { fill: #4f5d75; font-size: 10px; font-family: 'Geist Mono', 'IBM Plex Sans Thai', monospace; text-anchor: end; }
+    svg .c { fill: #4f5d75; font-size: 10px; font-weight: 600; font-family: 'Geist Mono', monospace; text-anchor: middle; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <p class="eyebrow">C4 · Level 1 System Context · HTC Insights</p>
+    <h1>ระบบกับผู้ใช้และบริการภายนอก</h1>
+
+    <div class="diagram-container">
+      <svg viewBox="0 0 960 652" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="htc-c4-context-title htc-c4-context-desc">
+        <title id="htc-c4-context-title">แผนภาพบริบทระบบ C4 ของ HTC Insights</title>
+        <desc id="htc-c4-context-desc">นักศึกษา ผู้ประกอบการ และผู้ดูแลใช้ระบบ HTC Insights ซึ่งพึ่ง Google OAuth ในการยืนยันตัวตน SerpApi ค้นสถานที่ Cloudinary เก็บรูป และ OpenStreetMap ให้ไทล์แผนที่</desc>
+        <defs>
+          <pattern id="dots" width="22" height="22" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="0.9" fill="rgba(45,49,66,0.10)"/>
+          </pattern>
+          <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4f5d75"/></marker>
+          <marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#eb6c36"/></marker>
+          <marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2e5aa8"/></marker>
+        </defs>
+
+        <rect width="100%" height="100%" fill="#f5f5f5"/>
+        <rect width="100%" height="100%" fill="url(#dots)" opacity="0.55"/>
+        <path d="M180 104 L180 160 Q180 168 188 168 L392 168 Q400 168 400 176 L400 232" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <line x1="480" y1="104" x2="480" y2="232" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <path d="M780 104 L780 160 Q780 168 772 168 L568 168 Q560 168 560 176 L560 232" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <path d="M390 344 L390 360 Q390 368 382 368 L152 368 Q144 368 144 376 L144 440" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <path d="M450 344 L450 376 Q450 384 442 384 L376 384 Q368 384 368 392 L368 440" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <path d="M510 344 L510 376 Q510 384 518 384 L584 384 Q592 384 592 392 L592 440" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <path d="M570 344 L570 360 Q570 368 578 368 L808 368 Q816 368 816 376 L816 440" fill="none" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <rect class="mk" x="192" y="128" width="116" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="198" y="138" style="text-anchor:start">รีวิว · บอร์ด · ค้นหา</text>
+        <rect class="mk" x="492" y="128" width="120" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="498" y="138" style="text-anchor:start">ลงประกาศ · ยืนยันสิทธิ์</text>
+        <rect class="mk" x="792" y="128" width="108" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="798" y="138" style="text-anchor:start">คัดกรอง · แดชบอร์ด</text>
+        <rect class="mk" x="152" y="400" width="44" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="158" y="410" style="text-anchor:start">OAuth</text>
+        <rect class="mk" x="376" y="400" width="68" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="382" y="410" style="text-anchor:start">ค้นหาสถานที่</text>
+        <rect class="mk" x="600" y="400" width="60" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="606" y="410" style="text-anchor:start">อัปโหลดรูป</text>
+        <rect class="mk" x="824" y="400" width="56" height="14" rx="2" fill="#f5f5f5"/>
+        <text class="lk" x="830" y="410" style="text-anchor:start">โหลดไทล์</text>
+        <rect class="nd" x="80" y="40" width="200" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="80" y="40" width="200" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <rect x="88" y="48" width="40" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+        <text class="t" x="108" y="57" style="fill:#7a8399">PERSON</text>
+        <text class="n" x="180" y="78.5">นักศึกษา</text>
+        <text class="s" x="180" y="94.5">อีเมลโดเมนวิทยาลัย</text>
+        <rect class="nd" x="380" y="40" width="200" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="380" y="40" width="200" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <rect x="388" y="48" width="40" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+        <text class="t" x="408" y="57" style="fill:#7a8399">PERSON</text>
+        <text class="n" x="480" y="78.5">ผู้ประกอบการ</text>
+        <text class="s" x="480" y="94.5">บุคคลภายนอก · EXTERNAL</text>
+        <rect class="nd" x="680" y="40" width="200" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="680" y="40" width="200" height="64" rx="6" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <rect x="688" y="48" width="40" height="12" rx="2" fill="transparent" stroke="rgba(122,131,153,0.40)" stroke-width="0.8"/>
+        <text class="t" x="708" y="57" style="fill:#7a8399">PERSON</text>
+        <text class="n" x="780" y="78.5">ผู้ดูแลระบบ</text>
+        <text class="s" x="780" y="94.5">ADMIN · super admin</text>
+        <rect class="nd" x="330" y="232" width="300" height="112" rx="6" fill="#f5f5f5"/>
+        <rect x="330" y="232" width="300" height="112" rx="6" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <rect x="338" y="240" width="76" height="12" rx="2" fill="transparent" stroke="rgba(235,108,54,0.50)" stroke-width="0.8"/>
+        <text class="t" x="376" y="249" style="fill:#eb6c36">SOFTWARE SYSTEM</text>
+        <text class="n" x="480" y="287">HTC Insights</text>
+        <text class="s" x="480" y="303">ระบบฐานข้อมูลสถานประกอบการฝึกงาน</text>
+        <text class="m" x="480" y="318">Next.js full-stack · SQLite · เซิร์ฟเวอร์ส่วนตัว</text>
+        <rect class="nd" x="56" y="440" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="56" y="440" width="176" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="64" y="448" width="48" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text class="t" x="88" y="457" style="fill:#4f5d75">EXTERNAL</text>
+        <text class="n" x="144" y="478.5">Google OAuth</text>
+        <text class="s" x="144" y="494.5">ยืนยันตัวตนผู้ใช้</text>
+        <rect class="nd" x="280" y="440" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="280" y="440" width="176" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="288" y="448" width="48" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text class="t" x="312" y="457" style="fill:#4f5d75">EXTERNAL</text>
+        <text class="n" x="368" y="478.5">SerpApi</text>
+        <text class="s" x="368" y="494.5">ค้นสถานที่ Google Maps</text>
+        <rect class="nd" x="504" y="440" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="504" y="440" width="176" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="512" y="448" width="48" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text class="t" x="536" y="457" style="fill:#4f5d75">EXTERNAL</text>
+        <text class="n" x="592" y="478.5">Cloudinary</text>
+        <text class="s" x="592" y="494.5">เก็บรูปรีวิว · รูปบัตร</text>
+        <rect class="nd" x="728" y="440" width="176" height="64" rx="6" fill="#f5f5f5"/>
+        <rect x="728" y="440" width="176" height="64" rx="6" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <rect x="736" y="448" width="48" height="12" rx="2" fill="transparent" stroke="rgba(45,49,66,0.30)" stroke-width="0.8"/>
+        <text class="t" x="760" y="457" style="fill:#4f5d75">EXTERNAL</text>
+        <text class="n" x="816" y="478.5">OpenStreetMap</text>
+        <text class="s" x="816" y="494.5">ไทล์แผนที่</text>
+        <line x1="40" y1="544" x2="920" y2="544" stroke="rgba(45,49,66,0.10)" stroke-width="0.8"/>
+        <text x="40" y="560" fill="#4f5d75" font-size="8" font-family="'Geist Mono', monospace" letter-spacing="0.18em">LEGEND</text>
+        <rect x="40" y="574" width="24" height="12" rx="2" fill="rgba(79,93,117,0.10)" stroke="#7a8399" stroke-width="1"/>
+        <text class="lk" x="72" y="584">ผู้ใช้</text>
+        <rect x="120" y="574" width="24" height="12" rx="2" fill="rgba(235,108,54,0.08)" stroke="#eb6c36" stroke-width="1"/>
+        <text class="lk" x="152" y="584">ระบบนี้</text>
+        <rect x="212" y="574" width="24" height="12" rx="2" fill="rgba(45,49,66,0.03)" stroke="rgba(45,49,66,0.30)" stroke-width="1"/>
+        <text class="lk" x="244" y="584">ระบบภายนอก</text>
+        <line x1="332" y1="580" x2="360" y2="580" stroke="#2e5aa8" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+        <text class="lk" x="368" y="584">การใช้งาน / เรียกผ่าน HTTPS</text>
+        <text class="lk" x="40" y="612">ทุกความลับ (SERPAPI_KEY, คีย์ Cloudinary, Google client secret) อยู่ใน env ฝั่งเซิร์ฟเวอร์ · ไม่มีคีย์ SerpApi หรือ Cloudinary ระบบซ่อนฟีเจอร์นั้นเอง</text>
+        <text class="lk" x="40" y="630">ไทล์ OpenStreetMap เบราว์เซอร์ของผู้ใช้โหลดตรง ไม่ผ่านเซิร์ฟเวอร์</text>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>
